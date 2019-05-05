@@ -113,12 +113,125 @@ connection.connect(function (err) {
     if (err) throw err;
     console.log("database created");
   });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255) NOT NULL, lastname VARCHAR(255) NOT NULL, avatarUrl VARCHAR(500), university VARCHAR(255), password VARCHAR(40) NOT NULL, role VARCHAR(30))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255) NOT NULL, lastname VARCHAR(255) NOT NULL, avatarUrl VARCHAR(500), university VARCHAR(255), password VARCHAR(40) NOT NULL, role VARCHAR(30), mail VARCHAR(255), telephoneNumber VARCHAR(255))", function (err, result) {
     if (err) throw err;
     console.log("Table users created");
   });
 });
 module.exports = connection;
+
+/***/ }),
+
+/***/ "./src/api/helpers/jwt.js":
+/*!********************************!*\
+  !*** ./src/api/helpers/jwt.js ***!
+  \********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var jsonwebtoken__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! jsonwebtoken */ "jsonwebtoken");
+/* harmony import */ var jsonwebtoken__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(jsonwebtoken__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! dotenv/config */ "dotenv/config");
+/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(dotenv_config__WEBPACK_IMPORTED_MODULE_1__);
+
+
+const secretKey = process.env.key;
+/* harmony default export */ __webpack_exports__["default"] = ({
+  //Sign Token
+  issue(payload, expiresIn) {
+    return jsonwebtoken__WEBPACK_IMPORTED_MODULE_0___default.a.sign(payload, secretKey, {
+      expiresIn: 10800
+    });
+  }
+
+});
+
+/***/ }),
+
+/***/ "./src/api/helpers/passport/ldapConfig.js":
+/*!************************************************!*\
+  !*** ./src/api/helpers/passport/ldapConfig.js ***!
+  \************************************************/
+/*! exports provided: getLDAPConfiguration */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getLDAPConfiguration", function() { return getLDAPConfiguration; });
+const getLDAPConfiguration = function (req, callback) {
+  process.nextTick(function () {
+    var opts = {
+      server: {
+        // url: "ldap://127.0.0.1:4000",
+        // bindDn: `cn=${req.body.username},dc=test`,
+        // bindCredentials: `${req.body.password}`,
+        // searchBase: 'dc=test',
+        // searchFilter: `uid=${req.body.username}`,
+        // reconnect: true
+        // bindDN: 'cn=root',
+        // bindCredentials: 'secret',
+        // searchBase: 'ou=passport-ldapauth',
+        // searchFilter: '(uid={{username}})'
+        url: 'ldap://ldap.forumsys.com:389',
+        bindDn: "cn=read-only-admin,dc=example,dc=com",
+        bindCredentials: "password",
+        searchBase: 'dc=example,dc=com',
+        searchFilter: 'uid={{username}}'
+      }
+    };
+    callback(null, opts);
+    console.log('hello');
+  });
+};
+
+/***/ }),
+
+/***/ "./src/api/login.js":
+/*!**************************!*\
+  !*** ./src/api/login.js ***!
+  \**************************/
+/*! exports provided: loginRouter */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "loginRouter", function() { return loginRouter; });
+/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! express */ "express");
+/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(express__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _helpers_jwt__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./helpers/jwt */ "./src/api/helpers/jwt.js");
+/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! dotenv/config */ "dotenv/config");
+/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(dotenv_config__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./helpers/db.connexion */ "./src/api/helpers/db.connexion.js");
+/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_3__);
+
+
+
+
+const secret = process.env.key;
+const loginRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
+loginRouter.post('/', (req, res) => {
+  const {
+    password,
+    username
+  } = req.body; // const user = _users.find((user) => user.username === req.body.username);
+
+  let query = `SELECT * FROM users WHERE username = '${username}'`;
+  _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_3___default.a.query(query, (err, results) => {
+    if (!results) res.status(404).send('User not found');
+    if (results[0].password !== password) return res.status(404).send('Password incorrect');
+    const token = _helpers_jwt__WEBPACK_IMPORTED_MODULE_1__["default"].issue({
+      username
+    }, secret, {
+      expiresIn: 18000
+    });
+    console.log(token);
+    res.json({
+      'token': token
+    });
+  });
+});
 
 /***/ }),
 
@@ -164,7 +277,7 @@ userRouter.get('/', (req, res) => {
     }
   });
 });
-userRouter.post('/', (req, res) => {
+userRouter.post('/register', (req, res) => {
   const body = req.body;
   let username = body.username;
   let password = body.password;
@@ -173,11 +286,13 @@ userRouter.post('/', (req, res) => {
   let avatarUrl = body.avatarUrl;
   let university = body.university;
   let role = body.role;
+  let mail = body.mail;
+  let telephoneNumber = body.telephoneNumber;
 
   if (!username || !password) {
     res.status(412).send('Username and password are missing');
   } else {
-    let query = `INSERT INTO users (username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${username}', '${password}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
+    let query = `INSERT INTO users (username, password, firstname, lastname, avatarUrl, university, role, mail, telephoneNumber) VALUES ('${username}', '${password}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}'), ${mail}, ${telephoneNumber}`;
     _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_2___default.a.query(query, (err, results, fields) => {
       if (err) {
         console.log(err);
@@ -217,10 +332,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var morgan__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! morgan */ "morgan");
 /* harmony import */ var morgan__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(morgan__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var _api_users__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./api/users */ "./src/api/users.js");
-/* harmony import */ var _api_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./api/helpers/db.connexion */ "./src/api/helpers/db.connexion.js");
-/* harmony import */ var _api_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_api_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var passport__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! passport */ "passport");
-/* harmony import */ var passport__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(passport__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _api_login__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./api/login */ "./src/api/login.js");
+/* harmony import */ var _api_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./api/helpers/db.connexion */ "./src/api/helpers/db.connexion.js");
+/* harmony import */ var _api_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_api_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var passport__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! passport */ "passport");
+/* harmony import */ var passport__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(passport__WEBPACK_IMPORTED_MODULE_6__);
+/* harmony import */ var _api_helpers_passport_ldapConfig__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./api/helpers/passport/ldapConfig */ "./src/api/helpers/passport/ldapConfig.js");
+
+
 
 
 
@@ -239,50 +358,59 @@ app.use(express__WEBPACK_IMPORTED_MODULE_0___default.a.urlencoded({
   extended: true
 }));
 app.use('/users', _api_users__WEBPACK_IMPORTED_MODULE_3__["userRouter"]);
+app.use('/login', _api_login__WEBPACK_IMPORTED_MODULE_4__["loginRouter"]); // let getLDAPConfiguration = function (req, callback) {
+//   process.nextTick(function () {
+//     var opts = {
+//       server: {
+//         // url: "ldap://127.0.0.1:4000",
+//         // bindDn: `cn=${req.body.username},dc=test`,
+//         // bindCredentials: `${req.body.password}`,
+//         // searchBase: 'dc=test',
+//         // searchFilter: `uid=${req.body.username}`,
+//         // reconnect: true
+//         // bindDN: 'cn=root',
+//         // bindCredentials: 'secret',
+//         // searchBase: 'ou=passport-ldapauth',
+//         // searchFilter: '(uid={{username}})'
+//         url: 'ldap://ldap.forumsys.com:389',
+//         bindDn: "cn=read-only-admin,dc=example,dc=com",
+//         bindCredentials: "password",
+//         searchBase: 'dc=example,dc=com',
+//         searchFilter: 'uid={{username}}'
+//       }
+//     };
+//     callback(null, opts);
+//     console.log('hello')
+//   });
+// };
+// passport.use(new LdapStrategy(getLDAPConfiguration,
+//   function (user, done) {
+//     // morgan.info("LDAP user ", user.username, "is logged in.")
+//     console.log('user', user)
+//     return done(null, user);
+//   }))
+// passport.serializeUser(function (user, done) {
+//   done(null, user.uid)
+//   console.log('hihi')
+// })
+// passport.deserializeUser(function (id, done) {
+//   User.findOne({ uid: id }).exec()
+//     .then(user => {
+//       if (!user) {
+//         done(new Error(`Cannot find user with uid=${id}`))
+//       } else {
+//         done(null, user)
+//         res.send(user)
+//         console.log('user data', user)
+//       }
+//     })
+// })
+// app.post('/login', passport.authenticate('ldapauth', {session: false}), function(req, res) {
+//   res.send({
+//     status: 'ok',
+//   });
+// });
 
-let getLDAPConfiguration = function (req, callback) {
-  process.nextTick(function () {
-    var opts = {
-      server: {
-        url: "ldap://127.0.0.1:4000",
-        bindDn: `uid=${req.body.username}`,
-        bindCredentials: `${req.body.password}`,
-        searchBase: 'test',
-        searchFilter: `uid=${req.body.username}`,
-        reconnect: true
-      }
-    };
-    callback(null, opts);
-  });
-};
-
-passport__WEBPACK_IMPORTED_MODULE_5___default.a.use(new LdapStrategy(getLDAPConfiguration, function (user, done) {
-  morgan__WEBPACK_IMPORTED_MODULE_2___default.a.info("LDAP user ", user.username, "is logged in.");
-  return done(null, user);
-}));
-passport__WEBPACK_IMPORTED_MODULE_5___default.a.serializeUser(function (user, done) {
-  done(null, user.uid);
-});
-passport__WEBPACK_IMPORTED_MODULE_5___default.a.deserializeUser(function (id, done) {
-  User.findOne({
-    uid: id
-  }).exec().then(user => {
-    if (!user) {
-      done(new Error(`Cannot find user with uid=${id}`));
-    } else {
-      done(null, user);
-    }
-  });
-});
-app.post('/login', passport__WEBPACK_IMPORTED_MODULE_5___default.a.authenticate('ldapauth', {
-  session: false
-}), function (req, res) {
-  res.send({
-    error: err,
-    status: 'ok',
-    content: data
-  });
-});
 app.listen(port, () => console.log(`server is running on port ${port}`));
 
 /***/ }),
@@ -310,6 +438,17 @@ module.exports = require("cors");
 
 /***/ }),
 
+/***/ "dotenv/config":
+/*!********************************!*\
+  !*** external "dotenv/config" ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("dotenv/config");
+
+/***/ }),
+
 /***/ "express":
 /*!**************************!*\
   !*** external "express" ***!
@@ -318,6 +457,17 @@ module.exports = require("cors");
 /***/ (function(module, exports) {
 
 module.exports = require("express");
+
+/***/ }),
+
+/***/ "jsonwebtoken":
+/*!*******************************!*\
+  !*** external "jsonwebtoken" ***!
+  \*******************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("jsonwebtoken");
 
 /***/ }),
 
