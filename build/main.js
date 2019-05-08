@@ -97,19 +97,35 @@ module.exports =
 
 const express = __webpack_require__(/*! express */ "express");
 
+const socket = __webpack_require__(/*! socket.io */ "socket.io");
+
 const cors = __webpack_require__(/*! cors */ "cors");
 
 const morgan = __webpack_require__(/*! morgan */ "morgan");
 
 const app = express();
+const port = process.env.PORT || 5000;
+const server = app.listen(port, () => console.log(`server is running on port ${port}`)); //static files
+
+app.use(express.static('public')); // Socket Setup
+
+const io = socket(server);
 app.use(morgan('combined'));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({
   extended: true
 }));
-const port = process.env.PORT || 5000;
-app.listen(port, () => console.log(`server is running on port ${port}`));
+io.on('connection', function (socket) {
+  console.log('socket connected', socket.id);
+  socket.on('join', (data, callback) => {
+    console.log('username: ', data.username);
+    console.log('room: ', data.courseName);
+    console.log('id: ', socket.id);
+    socket.join(data.room);
+    socket.broadcast.to(data.room).emit('newMessage');
+  });
+});
 
 /***/ }),
 
@@ -155,6 +171,17 @@ module.exports = require("express");
 /***/ (function(module, exports) {
 
 module.exports = require("morgan");
+
+/***/ }),
+
+/***/ "socket.io":
+/*!****************************!*\
+  !*** external "socket.io" ***!
+  \****************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("socket.io");
 
 /***/ })
 

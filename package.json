@@ -7,7 +7,9 @@
     "backpack-core": "^0.8.3",
     "cors": "^2.8.5",
     "express": "^4.16.4",
-    "morgan": "^1.9.1"
+    "moment": "^2.24.0",
+    "morgan": "^1.9.1",
+    "socket.io": "^2.2.0"
   },
   "devDependencies": {
     "eslint": "^5.16.0"
