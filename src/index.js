@@ -7,6 +7,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
 
+import { realtimeRouter } from './routes/index'
 //static files
 app.use(express.static('public'));
 
@@ -19,16 +20,19 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/realtime', realtimeUser);
+app.use('/realtime', realtimeRouter);
 
 io.on('connection', function(socket){
   console.log('socket connected', socket.id)
-  socket.on('join', (data, callback) => {
+  socket.on('join', (data) => {
     console.log('username: ', data.username);
-    console.log('room: ', data.courseName)
+    console.log('room: ', data.room)
     console.log('id: ', socket.id)
+    const user = data.username;
+    const room = data.room;
 
-    socket.join(data.room);
-    socket.broadcast.to(data.room).emit('newMessage', )
-  })
-})
+    socket.join(room, console.log(`${user} has joined ${room}`));
+    socket.emit('joiningEvent', `${user} has joined the room ${room}`);
+    socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
+    })
+  });

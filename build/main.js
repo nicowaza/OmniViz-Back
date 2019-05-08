@@ -92,9 +92,12 @@ module.exports =
 /*!**********************!*\
   !*** ./src/index.js ***!
   \**********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _routes_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./routes/index */ "./src/routes/index.js");
 const express = __webpack_require__(/*! express */ "express");
 
 const socket = __webpack_require__(/*! socket.io */ "socket.io");
@@ -105,7 +108,8 @@ const morgan = __webpack_require__(/*! morgan */ "morgan");
 
 const app = express();
 const port = process.env.PORT || 5000;
-const server = app.listen(port, () => console.log(`server is running on port ${port}`)); //static files
+const server = app.listen(port, () => console.log(`server is running on port ${port}`));
+ //static files
 
 app.use(express.static('public')); // Socket Setup
 
@@ -116,15 +120,63 @@ app.use(express.json());
 app.use(express.urlencoded({
   extended: true
 }));
+app.use('/realtime', _routes_index__WEBPACK_IMPORTED_MODULE_0__["realtimeRouter"]);
 io.on('connection', function (socket) {
   console.log('socket connected', socket.id);
-  socket.on('join', (data, callback) => {
+  socket.on('join', data => {
     console.log('username: ', data.username);
-    console.log('room: ', data.courseName);
+    console.log('room: ', data.room);
     console.log('id: ', socket.id);
-    socket.join(data.room);
-    socket.broadcast.to(data.room).emit('newMessage');
+    const user = data.username;
+    const room = data.room;
+    setTimeout(() => {
+      socket.join(room, () => {
+        console.log(`${user} has joined ${room}`);
+      });
+      socket.emit('joiningEvent', `${user} has joined the room ${room}`);
+      socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
+    }, 0);
   });
+});
+
+/***/ }),
+
+/***/ "./src/routes/index.js":
+/*!*****************************!*\
+  !*** ./src/routes/index.js ***!
+  \*****************************/
+/*! exports provided: realtimeRouter */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _realtime__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./realtime */ "./src/routes/realtime.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "realtimeRouter", function() { return _realtime__WEBPACK_IMPORTED_MODULE_0__["realtimeRouter"]; });
+
+
+
+/***/ }),
+
+/***/ "./src/routes/realtime.js":
+/*!********************************!*\
+  !*** ./src/routes/realtime.js ***!
+  \********************************/
+/*! exports provided: realtimeRouter */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "realtimeRouter", function() { return realtimeRouter; });
+/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! express */ "express");
+/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(express__WEBPACK_IMPORTED_MODULE_0__);
+
+const realtimeRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
+realtimeRouter.post('/createCourse', (req, res) => {
+  const {
+    username,
+    courseName,
+    description
+  } = req.body;
 });
 
 /***/ }),
