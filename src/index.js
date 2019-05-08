@@ -7,7 +7,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
 
-import { realtimeRouter } from './routes/index'
+import { realtimeRouter } from './routes/index';
+import { userRouter } from './routes/users';
+import { loginRouter } from './routes/login';
+
+
 //static files
 app.use(express.static('public'));
 
@@ -21,6 +25,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/realtime', realtimeRouter);
+app.use('/users', userRouter);
+app.use('/login', loginRouter);
+
 
 io.on('connection', function(socket){
   console.log('socket connected', socket.id)
