@@ -30,14 +30,29 @@ app.use('/login', loginRouter);
 
 
 io.on('connection', function(socket){
+  socket.on('connect', function() {
+    io.emit('user connected');
+  });
+  socket.on('disconnect', function () {
+    io.emit('user disconnected');
+  });
   console.log('socket connected', socket.id)
+  socket.emit('messageChannel', 'hello')
+  socket.on('pingServer', (data) => {
+    console.log(data)
+  })
   socket.on('join', (data) => {
     console.log('username: ', data.username);
     console.log('room: ', data.room)
     console.log('id: ', socket.id)
     const user = data.username;
     const room = data.room;
-
+    const userId = socket.id;
+    socket.emit('roomCreation', {
+    user: user,
+    room: room,
+    userId: userId
+    });
     socket.join(room, console.log(`${user} has joined ${room}`));
     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);

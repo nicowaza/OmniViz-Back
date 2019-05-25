@@ -113,7 +113,7 @@ connection.connect(function (err) {
     if (err) throw err;
     console.log("database created");
   });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255) NOT NULL, lastname VARCHAR(255) NOT NULL, avatarUrl VARCHAR(500), university VARCHAR(255), password VARCHAR(40) NOT NULL, role VARCHAR(30))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, email VARCHAR(250) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255) NOT NULL, lastname VARCHAR(255) NOT NULL, avatarUrl VARCHAR(500), university VARCHAR(255), password VARCHAR(40) NOT NULL, role VARCHAR(30))", function (err, result) {
     if (err) throw err;
     console.log("Table users created");
   });
@@ -190,13 +190,29 @@ app.use('/realtime', _routes_index__WEBPACK_IMPORTED_MODULE_0__["realtimeRouter"
 app.use('/users', _routes_users__WEBPACK_IMPORTED_MODULE_1__["userRouter"]);
 app.use('/login', _routes_login__WEBPACK_IMPORTED_MODULE_2__["loginRouter"]);
 io.on('connection', function (socket) {
+  socket.on('connect', function () {
+    io.emit('user connected');
+  });
+  socket.on('disconnect', function () {
+    io.emit('user disconnected');
+  });
   console.log('socket connected', socket.id);
+  socket.emit('messageChannel', 'hello');
+  socket.on('pingServer', data => {
+    console.log(data);
+  });
   socket.on('join', data => {
     console.log('username: ', data.username);
     console.log('room: ', data.room);
     console.log('id: ', socket.id);
     const user = data.username;
     const room = data.room;
+    const userId = socket.id;
+    socket.emit('roomCreation', {
+      user: user,
+      room: room,
+      userId: userId
+    });
     socket.join(room, console.log(`${user} has joined ${room}`));
     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
@@ -255,15 +271,15 @@ const loginRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
 loginRouter.post('/', (req, res) => {
   const {
     password,
-    username
+    email
   } = req.body; // const user = _users.find((user) => user.username === req.body.username);
 
-  let query = `SELECT * FROM users WHERE username = '${username}'`;
+  let query = `SELECT * FROM users WHERE email = '${email}'`;
   _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_3___default.a.query(query, (err, results) => {
-    if (!results) res.status(404).send('User not found');
+    if (!results) return res.status(404).send('User not found');
     if (results[0].password !== password) return res.status(404).send('Password incorrect');
     const token = _helpers_jwt__WEBPACK_IMPORTED_MODULE_1__["default"].issue({
-      username
+      email
     }, secret, {
       expiresIn: 18000
     });
@@ -340,7 +356,8 @@ userRouter.get('/', (req, res) => {
   });
 });
 userRouter.post('/', (req, res) => {
-  const body = req.body;
+  let body = req.body;
+  let email = body.email;
   let username = body.username;
   let password = body.password;
   let firstname = body.firstname;
@@ -349,10 +366,10 @@ userRouter.post('/', (req, res) => {
   let university = body.university;
   let role = body.role;
 
-  if (!username || !password) {
-    res.status(412).send('Username and password are missing');
+  if (!email || !password) {
+    res.status(412).send('Email and password are missing');
   } else {
-    let query = `INSERT INTO users (username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${username}', '${password}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
+    let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${password}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
     _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query(query, (err, results, fields) => {
       if (err) {
         console.log(err);

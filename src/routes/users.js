@@ -21,7 +21,8 @@ userRouter.get('/', (req, res) => {
 });
 
 userRouter.post('/', (req, res) => {
-  const body = req.body;
+  let body = req.body;
+  let email = body.email;
   let username = body.username;
   let password = body.password;
   let firstname = body.firstname;
@@ -30,11 +31,11 @@ userRouter.post('/', (req, res) => {
   let university = body.university;
   let role = body.role;
 
-  if (!username || !password) {
-    res.status(412).send('Username and password are missing')
+  if (!email || !password) {
+    res.status(412).send('Email and password are missing')
   }else{
 
-    let query = `INSERT INTO users (username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${username}', '${password}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
+    let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${password}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
 
     connection.query(query, (err, results, fields) => {
       if (err) {

@@ -11,18 +11,18 @@ export const loginRouter = express.Router();
 
 loginRouter.post('/', (req, res) => {
 
-  const { password, username } = req.body
+  const { password, email } = req.body
 
   // const user = _users.find((user) => user.username === req.body.username);
-  let query = `SELECT * FROM users WHERE username = '${username}'`;
+  let query = `SELECT * FROM users WHERE email = '${email}'`;
 
   connection.query(query, (err, results) => {
 
-    if(!results) res.status(404).send('User not found')
+    if(!results) return res.status(404).send('User not found')
       if(results[0].password !== password) return res.status(404).send('Password incorrect')
 
       const token = jwt.issue({
-        username
+        email
       }, secret, {expiresIn: 18000})
       console.log(token)
       res.json({'token': token})
