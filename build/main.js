@@ -113,7 +113,7 @@ connection.connect(function (err) {
     if (err) throw err;
     console.log("database created");
   });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, email VARCHAR(250) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255) NOT NULL, lastname VARCHAR(255) NOT NULL, avatarUrl VARCHAR(500), university VARCHAR(255), password VARCHAR(40) NOT NULL, role VARCHAR(30))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, email VARCHAR(250) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255), lastname VARCHAR(255), avatarUrl VARCHAR(500), university VARCHAR(255), password VARCHAR(40) NOT NULL, role VARCHAR(30))", function (err, result) {
     if (err) throw err;
     console.log("Table users created");
   });
@@ -170,6 +170,13 @@ const cors = __webpack_require__(/*! cors */ "cors");
 
 const morgan = __webpack_require__(/*! morgan */ "morgan");
 
+const bodyParser = __webpack_require__(/*! body-parser */ "body-parser");
+
+const expressValidator = __webpack_require__(/*! express-validator */ "express-validator"); //authentication packages
+
+
+const session = __webpack_require__(/*! express-session */ "express-session");
+
 const app = express();
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
@@ -177,47 +184,77 @@ const server = app.listen(port, () => console.log(`server is running on port ${p
 
  //static files
 
-app.use(express.static('public')); // Socket Setup
+app.use(express.static('public')); //logger
 
-const io = socket(server);
-app.use(morgan('combined'));
-app.use(cors());
+app.use(morgan('combined')); // app.use(cors({
+//   origin:'*',
+//   methods:['GET', 'POST', 'PUT', 'DELETE'],
+//   credentials: true
+// }));
+
 app.use(express.json());
 app.use(express.urlencoded({
   extended: true
 }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
+app.use(expressValidator()); // express sessions
+
+app.use(session({
+  secret: 'thedudeabides',
+  name: 'sid',
+  resave: true,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 2 // cookie: { secure: true }
+
+  }
+}));
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+}); // Socket Setup
+
+const io = socket(server);
 app.use('/realtime', _routes_index__WEBPACK_IMPORTED_MODULE_0__["realtimeRouter"]);
 app.use('/users', _routes_users__WEBPACK_IMPORTED_MODULE_1__["userRouter"]);
 app.use('/login', _routes_login__WEBPACK_IMPORTED_MODULE_2__["loginRouter"]);
-io.on('connection', function (socket) {
-  socket.on('connect', function () {
-    io.emit('user connected');
-  });
-  socket.on('disconnect', function () {
-    io.emit('user disconnected');
-  });
-  console.log('socket connected', socket.id);
-  socket.emit('messageChannel', 'hello');
-  socket.on('pingServer', data => {
-    console.log(data);
-  });
-  socket.on('join', data => {
-    console.log('username: ', data.username);
-    console.log('room: ', data.room);
-    console.log('id: ', socket.id);
-    const user = data.username;
-    const room = data.room;
-    const userId = socket.id;
-    socket.emit('roomCreation', {
-      user: user,
-      room: room,
-      userId: userId
-    });
-    socket.join(room, console.log(`${user} has joined ${room}`));
-    socket.emit('joiningEvent', `${user} has joined the room ${room}`);
-    socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
-  });
-});
+app.get('/', (req, res, next) => {
+  req.session.name = 'nico';
+  console.log(session.req.name);
+}); // io.on('connection', function(socket){
+//   socket.on('connect', function() {
+//     io.emit('user connected');
+//   });
+//   socket.on('disconnect', function () {
+//     io.emit('user disconnected');
+//   });
+//   console.log('socket connected', socket.id)
+//   socket.emit('messageChannel', 'hello')
+//   socket.on('pingServer', (data) => {
+//     console.log(data)
+//   })
+//   socket.on('join', (data) => {
+//     console.log('username: ', data.username);
+//     console.log('room: ', data.room)
+//     console.log('id: ', socket.id)
+//     const user = data.username;
+//     const room = data.room;
+//     const userId = socket.id;
+//     socket.emit('roomCreation', {
+//     user: user,
+//     room: room,
+//     userId: userId
+//     });
+//     socket.join(room, console.log(`${user} has joined ${room}`));
+//     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
+//     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
+//     })
+//   });
 
 /***/ }),
 
@@ -335,6 +372,11 @@ __webpack_require__.r(__webpack_exports__);
 
 const mysql = __webpack_require__(/*! mysql */ "mysql");
 
+const expressValidator = __webpack_require__(/*! express-validator */ "express-validator");
+
+const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
+
+const saltRounds = 10;
 const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
 userRouter.get('/', (req, res) => {
   _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query('SELECT * FROM users ', (err, results, fields) => {
@@ -356,39 +398,59 @@ userRouter.get('/', (req, res) => {
   });
 });
 userRouter.post('/', (req, res) => {
-  let body = req.body;
-  let email = body.email;
-  let username = body.username;
-  let password = body.password;
-  let firstname = body.firstname;
-  let lastname = body.lastname;
-  let avatarUrl = body.avatarUrl;
-  let university = body.university;
-  let role = body.role;
+  console.log('ça marche');
+  req.checkBody('username', 'Username field cannot be empty.').notEmpty();
+  req.checkBody('username', 'Username must be between 4-15 characters long.').len(4, 15);
+  req.checkBody('email', 'The email you entered is invalid, please try again.').isEmail();
+  req.checkBody('email', 'Email address must be between 4-100 characters long, please try again.').len(4, 100);
+  req.checkBody('email', 'Email field cannot be empty.').notEmpty();
+  req.checkBody('password', 'Password field cannot be empty.').notEmpty();
+  req.checkBody('password', 'Password must be between 8-100 characters long.').len(8, 100);
+  req.checkBody("password", "Password must include one lowercase character, one uppercase character, a number, and a special character.").matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?!.* )(?=.*[^a-zA-Z0-9]).{8,}$/, "i");
+  req.checkBody('confirmedPassword', 'Password must be between 8-100 characters long.').len(8, 100);
+  req.checkBody('confirmedPassword', 'Passwords do not match, please try again.').equals(req.body.password);
+  const errors = req.validationErrors();
 
-  if (!email || !password) {
-    res.status(412).send('Email and password are missing');
+  if (errors) {
+    console.log(`errors: ${JSON.stringify(errors)}`);
+    res.send({
+      errors: errors
+    });
   } else {
-    let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${password}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
-    _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query(query, (err, results, fields) => {
-      if (err) {
-        console.log(err);
-        res.status(400).send({
-          status: false,
-          message: 'User not created'
-        }); // res.send({
-        //   err
-        // })
-      } else {
-        console.log(results);
-        res.send({
-          status: 200,
-          "success": "new user registered sucessfully",
-          content: results
-        });
-      }
+    let body = req.body;
+    let email = body.email;
+    let username = body.username;
+    let password = body.password;
+    let confirmedPassword = body.confirmedPassword;
+    let firstname = body.firstname;
+    let lastname = body.lastname;
+    let avatarUrl = body.avatarUrl;
+    let university = body.university;
+    let role = body.role;
+    bcrypt.hash(password, saltRounds, function (err, hash) {
+      let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
+      _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query(query, (err, results, fields) => {
+        if (err) {
+          console.log(err);
+          res.status(400).send({
+            status: false,
+            message: 'User not created'
+          });
+        } else {
+          console.log(results);
+          res.send({
+            status: 200,
+            "success": "new user registered sucessfully",
+            content: results
+          });
+        }
+
+        ;
+      });
     });
   }
+
+  ;
 });
 
 /***/ }),
@@ -402,6 +464,28 @@ userRouter.post('/', (req, res) => {
 
 module.exports = __webpack_require__(/*! /home/tech/workspace/cproh/OmniViz-Back/src/index.js */"./src/index.js");
 
+
+/***/ }),
+
+/***/ "bcrypt":
+/*!*************************!*\
+  !*** external "bcrypt" ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("bcrypt");
+
+/***/ }),
+
+/***/ "body-parser":
+/*!******************************!*\
+  !*** external "body-parser" ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("body-parser");
 
 /***/ }),
 
@@ -435,6 +519,28 @@ module.exports = require("dotenv/config");
 /***/ (function(module, exports) {
 
 module.exports = require("express");
+
+/***/ }),
+
+/***/ "express-session":
+/*!**********************************!*\
+  !*** external "express-session" ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("express-session");
+
+/***/ }),
+
+/***/ "express-validator":
+/*!************************************!*\
+  !*** external "express-validator" ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("express-validator");
 
 /***/ }),
 
