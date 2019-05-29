@@ -3,7 +3,7 @@ import connection from '../helpers/db.connexion';
 const mysql = require('mysql');
 const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
-const saltRounds = 10;
+
 
 export const userRouter = express.Router();
 
@@ -56,7 +56,7 @@ userRouter.post('/', (req, res) => {
     let university = body.university;
     let role = body.role;
 
-
+    const saltRounds = 10;
 
     bcrypt.hash(password, saltRounds, function(err, hash) {
       let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
