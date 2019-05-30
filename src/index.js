@@ -5,7 +5,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
-
+import { verifiedAuth } from './helpers/verifyAuth';
 //authentication packages
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
@@ -72,7 +72,7 @@ app.use('/realtime', realtimeRouter);
 app.use('/users', userRouter);
 app.use('/login', loginRouter);
 
-app.get('/', (req, res) => {
+app.get('/', verifiedAuth, (req, res) => {
   res.send('hello world')
   console.log('get req session user', req.session.passport)
   console.log('authenticated :', req.isAuthenticated())

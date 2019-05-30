@@ -3,7 +3,8 @@ import connection from '../helpers/db.connexion';
 const mysql = require('mysql');
 const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
-
+const passport = require('passport');
+require('../helpers/passport').default(passport);
 
 export const userRouter = express.Router();
 
@@ -23,7 +24,7 @@ userRouter.get('/', (req, res) => {
   });
 });
 
-userRouter.post('/', (req, res) => {
+userRouter.post('/register', (req, res) => {
 
   console.log('ça marche')
   req.checkBody('username', 'Username field cannot be empty.').notEmpty();
@@ -77,3 +78,18 @@ userRouter.post('/', (req, res) => {
     });
   };
 });
+
+userRouter.post('/login', (req, res, next) => {
+  passport.authenticate('local',  (err, user) => {
+    if(err){
+      res.send({status: 500, message: 'something went wrong'})
+    } else {
+      req.login(user, (err) => {
+        if(err) throw(err)
+        console.log('req login :', user)
+        console.log('login req.session', req.session)
+        res.send(JSON.stringify(user))
+      })
+    }
+  })(req,res,next);
+})

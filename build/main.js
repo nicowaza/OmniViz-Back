@@ -237,6 +237,30 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
 /***/ }),
 
+/***/ "./src/helpers/verifyAuth.js":
+/*!***********************************!*\
+  !*** ./src/helpers/verifyAuth.js ***!
+  \***********************************/
+/*! exports provided: verifiedAuth */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "verifiedAuth", function() { return verifiedAuth; });
+const verifiedAuth = function (req, res, next) {
+  if (req.isAuthenticated()) {
+    // req.user is available for use here
+    return next();
+  } else {
+    res.send({
+      status: 401,
+      message: 'unauthorized'
+    });
+  }
+};
+
+/***/ }),
+
 /***/ "./src/index.js":
 /*!**********************!*\
   !*** ./src/index.js ***!
@@ -246,9 +270,10 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _routes_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./routes/index */ "./src/routes/index.js");
-/* harmony import */ var _routes_users__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js");
-/* harmony import */ var _routes_login__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./routes/login */ "./src/routes/login.js");
+/* harmony import */ var _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
+/* harmony import */ var _routes_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./routes/index */ "./src/routes/index.js");
+/* harmony import */ var _routes_users__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js");
+/* harmony import */ var _routes_login__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./routes/login */ "./src/routes/login.js");
 const express = __webpack_require__(/*! express */ "express");
 
 const socket = __webpack_require__(/*! socket.io */ "socket.io");
@@ -261,8 +286,9 @@ const bodyParser = __webpack_require__(/*! body-parser */ "body-parser");
 
 const expressValidator = __webpack_require__(/*! express-validator */ "express-validator");
 
-const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt"); //authentication packages
+const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
+ //authentication packages
 
 const session = __webpack_require__(/*! express-session */ "express-session");
 
@@ -322,10 +348,10 @@ app.use(passport.initialize());
 app.use(passport.session()); // Socket Setup
 
 const io = socket(server);
-app.use('/realtime', _routes_index__WEBPACK_IMPORTED_MODULE_0__["realtimeRouter"]);
-app.use('/users', _routes_users__WEBPACK_IMPORTED_MODULE_1__["userRouter"]);
-app.use('/login', _routes_login__WEBPACK_IMPORTED_MODULE_2__["loginRouter"]);
-app.get('/', (req, res) => {
+app.use('/realtime', _routes_index__WEBPACK_IMPORTED_MODULE_1__["realtimeRouter"]);
+app.use('/users', _routes_users__WEBPACK_IMPORTED_MODULE_2__["userRouter"]);
+app.use('/login', _routes_login__WEBPACK_IMPORTED_MODULE_3__["loginRouter"]);
+app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (req, res) => {
   res.send('hello world');
   console.log('get req session user', req.session.passport);
   console.log('authenticated :', req.isAuthenticated()); // })(req,res,next);
@@ -410,24 +436,7 @@ const passport = __webpack_require__(/*! passport */ "passport");
 
 __webpack_require__(/*! ../helpers/passport */ "./src/helpers/passport.js").default(passport);
 
-const loginRouter = express.Router();
-loginRouter.post('/', (req, res, next) => {
-  passport.authenticate('local', (err, user) => {
-    if (err) {
-      res.send({
-        status: 500,
-        message: 'something went wrong'
-      });
-    } else {
-      req.login(user, err => {
-        if (err) throw err;
-        console.log('req login :', user);
-        console.log('login req.session', req.session);
-        res.send(JSON.stringify(user));
-      });
-    }
-  })(req, res, next);
-}); // const user_id = results.userID;
+const loginRouter = express.Router(); // const user_id = results.userID;
 // console.log('user.id: ', req.id)
 // req.login(req.id)
 // const { password, email } = req.body
@@ -492,6 +501,10 @@ const expressValidator = __webpack_require__(/*! express-validator */ "express-v
 
 const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
+const passport = __webpack_require__(/*! passport */ "passport");
+
+__webpack_require__(/*! ../helpers/passport */ "./src/helpers/passport.js").default(passport);
+
 const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
 userRouter.get('/', (req, res) => {
   _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query('SELECT * FROM users ', (err, results, fields) => {
@@ -512,7 +525,7 @@ userRouter.get('/', (req, res) => {
     }
   });
 });
-userRouter.post('/', (req, res) => {
+userRouter.post('/register', (req, res) => {
   console.log('ça marche');
   req.checkBody('username', 'Username field cannot be empty.').notEmpty();
   req.checkBody('username', 'Username must be between 4-15 characters long.').len(4, 15);
@@ -567,6 +580,23 @@ userRouter.post('/', (req, res) => {
   }
 
   ;
+});
+userRouter.post('/login', (req, res, next) => {
+  passport.authenticate('local', (err, user) => {
+    if (err) {
+      res.send({
+        status: 500,
+        message: 'something went wrong'
+      });
+    } else {
+      req.login(user, err => {
+        if (err) throw err;
+        console.log('req login :', user);
+        console.log('login req.session', req.session);
+        res.send(JSON.stringify(user));
+      });
+    }
+  })(req, res, next);
 });
 
 /***/ }),
