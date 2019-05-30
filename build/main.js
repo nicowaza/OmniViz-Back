@@ -122,34 +122,6 @@ module.exports = connection;
 
 /***/ }),
 
-/***/ "./src/helpers/jwt.js":
-/*!****************************!*\
-  !*** ./src/helpers/jwt.js ***!
-  \****************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var jsonwebtoken__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! jsonwebtoken */ "jsonwebtoken");
-/* harmony import */ var jsonwebtoken__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(jsonwebtoken__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! dotenv/config */ "dotenv/config");
-/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(dotenv_config__WEBPACK_IMPORTED_MODULE_1__);
-
-
-const secretKey = process.env.key;
-/* harmony default export */ __webpack_exports__["default"] = ({
-  //Sign Token
-  issue(payload, expiresIn) {
-    return jsonwebtoken__WEBPACK_IMPORTED_MODULE_0___default.a.sign(payload, secretKey, {
-      expiresIn: 10800
-    });
-  }
-
-});
-
-/***/ }),
-
 /***/ "./src/helpers/passport.js":
 /*!*********************************!*\
   !*** ./src/helpers/passport.js ***!
@@ -179,42 +151,42 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
   // =========================================================================
   // we are using named strategies since we have one for login and one for signup
   // by default, if there was no name, it would just be called 'local'
-  passport.use('local-signup', new LocalStrategy({
-    // by default, local strategy uses username and password, we will override with email
-    usernameField: 'email',
-    passwordField: 'password',
-    passReqToCallback: true // allows us to pass back the entire request to the callback
-
-  }, function (req, email, password, done) {
-    // find a user whose email is the same as the forms email
-    // we are checking to see if the user trying to register already exists
-    _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query("SELECT * FROM users WHERE email = ?", [email], function (err, result, fields) {
-      if (err) return done(err);
-
-      if (result.length > 0) {
-        console.log('email already in use');
-        return done(null, false, req.flash('signupMessage', 'Email is already in use.'));
-      } else {
-        // if there is no user with that email
-        // create the user
-        var newUserMysql = {
-          username: email,
-          password: bcrypt.hashSync(password, null, null) // use the generateHash function in our user model
-
-        };
-        var insertQuery = "INSERT INTO users ( email, password ) values (?,?)";
-        _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query(insertQuery, [newUserMysql.email, newUserMysql.password], function (err, rows) {
-          newUserMysql.id = rows.insertId;
-          return done(null, newUserMysql);
-        });
-      }
-    });
-  })); // =========================================================================
+  // passport.use(
+  //     'local-signup',
+  //     new LocalStrategy({
+  //         // by default, local strategy uses username and password, we will override with email
+  //         usernameField : 'email',
+  //         passwordField : 'password',
+  //         passReqToCallback : true // allows us to pass back the entire request to the callback
+  //     },
+  //     function(req, email, password, done) {
+  //         // find a user whose email is the same as the forms email
+  //         // we are checking to see if the user trying to register already exists
+  //         connection.query("SELECT * FROM users WHERE email = ?",[email], function(err, result, fields) {
+  //             if (err)
+  //                 return done(err);
+  //             if (result.length > 0) {
+  //                 console.log('email already in use')
+  //                 return done(null, false, req.flash('signupMessage', 'Email is already in use.'));
+  //             } else {
+  //                 // if there is no user with that email
+  //                 // create the user
+  //                 var newUserMysql = {
+  //                     username: email,
+  //                     password: bcrypt.hashSync(password, null, null)  // use the generateHash function in our user model
+  //                 };
+  //                 var insertQuery = "INSERT INTO users ( email, password ) values (?,?)";
+  //                 connection.query(insertQuery,[newUserMysql.email, newUserMysql.password],function(err, rows) {
+  //                     newUserMysql.id = rows.insertId;
+  //                     return done(null, newUserMysql);
+  //                 });
+  //             }
+  //         });
+  //     })
+  // );
+  // =========================================================================
   // LOCAL LOGIN =============================================================
   // =========================================================================
-  // we are using named strategies since we have one for login and one for signup
-  // by default, if there was no name, it would just be called 'local'
-
   passport.use(new LocalStrategy({
     // by default, local strategy uses username and password, we will override with email
     usernameField: 'email',
@@ -228,24 +200,19 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
       if (results.length === 0) {
         console.log('no user found');
-        return done(null, false); // req.flash is the way to set flashdata using connect-flash
+        return done(null, false);
       } else {
         let hashedPassword = results[0].password; // if the user is found but the password is wrong
 
         bcrypt.compare(password, hashedPassword, function (err, response) {
-          console.log('hashedpassword :', hashedPassword);
-          console.log('password :', password);
-
+          // console.log('hashedpassword :', hashedPassword)
+          // console.log('password :', password)
           if (response == true) {
             // all is well, return successful user
             console.log(results);
-            const user_id = results[0].userID;
-            console.log('user id id :', user_id);
-            req.login(user_id, function (err) {
-              if (err) throw err;
-              console.log('req login :', user_id);
-            });
-            return done(null, results);
+            const user = results[0];
+            console.log('user :', user);
+            return done(null, user);
           } else {
             console.log('wrong password');
             return done(null, false); // create the loginMessage and save it to session as flashdata
@@ -254,16 +221,15 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
       }
     });
   }));
-  passport.serializeUser(function (user_id, done) {
-    console.log('serialize usr_id: ', user_id);
-    done(null, user_id);
+  passport.serializeUser(function (user, done) {
+    console.log('serialize usr_id: ', user.userID);
+    done(null, user.userID);
   }); // used to deserialize the user
 
-  passport.deserializeUser(function (user_id, done) {
-    console.log('deserialize usr id: ', user_id);
-    _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query("SELECT * FROM users WHERE id = ? ", [user_id], function (err, results) {
-      done(null, results[0]);
-      console.log('user : ', results[0]);
+  passport.deserializeUser(function (id, done) {
+    console.log('deserialize usr id: ', id);
+    _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query("SELECT * FROM users WHERE userID = ? ", [id], function (err, user) {
+      done(null, user); // console.log('user : ', user)
     });
   });
 });
@@ -300,6 +266,8 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt"); //authentication pac
 
 const session = __webpack_require__(/*! express-session */ "express-session");
 
+const MySQLStore = __webpack_require__(/*! express-mysql-session */ "express-mysql-session")(session);
+
 const passport = __webpack_require__(/*! passport */ "passport");
 
 __webpack_require__(/*! ./helpers/passport */ "./src/helpers/passport.js").default(passport);
@@ -313,7 +281,8 @@ const server = app.listen(port, () => console.log(`server is running on port ${p
 
 app.use(express.static('public')); //logger
 
-app.use(morgan('combined'));
+app.use(morgan('combined')); //CROSS ORIGINS
+
 app.use(cors({
   origin: 'http://localhost:8080',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -327,11 +296,21 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: false
 }));
-app.use(expressValidator()); // express sessions
+app.use(expressValidator()); //mySQLStore
+
+const options = {
+  host: 'localhost',
+  // port: 5000,
+  user: 'root',
+  password: '',
+  database: 'OmnivizTest'
+};
+const sessionStore = new MySQLStore(options); // express sessions
 
 app.use(session({
   secret: 'thedudeabides',
   name: 'sid',
+  store: sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -346,11 +325,10 @@ const io = socket(server);
 app.use('/realtime', _routes_index__WEBPACK_IMPORTED_MODULE_0__["realtimeRouter"]);
 app.use('/users', _routes_users__WEBPACK_IMPORTED_MODULE_1__["userRouter"]);
 app.use('/login', _routes_login__WEBPACK_IMPORTED_MODULE_2__["loginRouter"]);
-app.get('/', (req, res, next) => {
-  // req.session.name = 'nico';
-  console.log(req.session);
-  console.log('req.user :', req.user);
-  console.log('authenticated :', req.isAuthenticated());
+app.get('/', (req, res) => {
+  res.send('hello world');
+  console.log('get req session user', req.session.passport);
+  console.log('authenticated :', req.isAuthenticated()); // })(req,res,next);
 }); // // error handler
 // app.use(function(err, req, res, next) {
 //   // set locals, only providing error in development
@@ -422,38 +400,48 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "loginRouter", function() { return loginRouter; });
-/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! express */ "express");
-/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(express__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _helpers_jwt__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/jwt */ "./src/helpers/jwt.js");
-/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! dotenv/config */ "dotenv/config");
-/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(dotenv_config__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_3__);
+const express = __webpack_require__(/*! express */ "express"); // import jwt from '../helpers/jwt';
+// import 'dotenv/config';
+// import connection from '../helpers/db.connexion';
+// const secret = process.env.key;
 
-
-
-
-const secret = process.env.key;
 
 const passport = __webpack_require__(/*! passport */ "passport");
 
-const loginRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
-loginRouter.post('/', passport.authenticate('local', (req, res) => {// const user_id = results.userID;
-  // console.log('user.id: ', req.id)
-  // req.login(req.id)
-  // const { password, email } = req.body
-  // // const user = _users.find((user) => user.username === req.body.username);
-  // let query = `SELECT * FROM users WHERE email = '${email}'`;
-  // connection.query(query, (err, results) => {
-  //   if(results.length === 0) return res.status(404).send('User not found')
-  //     if(results[0].password !== password) return res.status(404).send('Password incorrect')
-  //     const token = jwt.issue({
-  //       email
-  //     }, secret, {expiresIn: 18000})
-  //     console.log(token)
-  //     res.json({'token': token})
-  //   })
-}));
+__webpack_require__(/*! ../helpers/passport */ "./src/helpers/passport.js").default(passport);
+
+const loginRouter = express.Router();
+loginRouter.post('/', (req, res, next) => {
+  passport.authenticate('local', (err, user) => {
+    if (err) {
+      res.send({
+        status: 500,
+        message: 'something went wrong'
+      });
+    } else {
+      req.login(user, err => {
+        if (err) throw err;
+        console.log('req login :', user);
+        console.log('login req.session', req.session);
+        res.send(JSON.stringify(user));
+      });
+    }
+  })(req, res, next);
+}); // const user_id = results.userID;
+// console.log('user.id: ', req.id)
+// req.login(req.id)
+// const { password, email } = req.body
+// // const user = _users.find((user) => user.username === req.body.username);
+// let query = `SELECT * FROM users WHERE email = '${email}'`;
+// connection.query(query, (err, results) => {
+//   if(results.length === 0) return res.status(404).send('User not found')
+//     if(results[0].password !== password) return res.status(404).send('Password incorrect')
+//     const token = jwt.issue({
+//       email
+//     }, secret, {expiresIn: 18000})
+//     console.log(token)
+//     res.json({'token': token})
+//   })
 
 /***/ }),
 
@@ -628,17 +616,6 @@ module.exports = require("cors");
 
 /***/ }),
 
-/***/ "dotenv/config":
-/*!********************************!*\
-  !*** external "dotenv/config" ***!
-  \********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = require("dotenv/config");
-
-/***/ }),
-
 /***/ "express":
 /*!**************************!*\
   !*** external "express" ***!
@@ -647,6 +624,17 @@ module.exports = require("dotenv/config");
 /***/ (function(module, exports) {
 
 module.exports = require("express");
+
+/***/ }),
+
+/***/ "express-mysql-session":
+/*!****************************************!*\
+  !*** external "express-mysql-session" ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("express-mysql-session");
 
 /***/ }),
 
@@ -669,17 +657,6 @@ module.exports = require("express-session");
 /***/ (function(module, exports) {
 
 module.exports = require("express-validator");
-
-/***/ }),
-
-/***/ "jsonwebtoken":
-/*!*******************************!*\
-  !*** external "jsonwebtoken" ***!
-  \*******************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = require("jsonwebtoken");
 
 /***/ }),
 

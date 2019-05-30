@@ -1,14 +1,27 @@
-import express from 'express'
-import jwt from '../helpers/jwt';
-import 'dotenv/config';
-import connection from '../helpers/db.connexion';
+const express = require ('express');
+// import jwt from '../helpers/jwt';
+// import 'dotenv/config';
+// import connection from '../helpers/db.connexion';
+// const secret = process.env.key;
+const passport = require('passport');
+require('../helpers/passport').default(passport);
 
-const secret = process.env.key;
-const passport = require('passport')
 export const loginRouter = express.Router();
 
-
-loginRouter.post('/', passport.authenticate('local',  (req, res) => {
+loginRouter.post('/', (req, res, next) => {
+  passport.authenticate('local',  (err, user) => {
+    if(err){
+      res.send({status: 500, message: 'something went wrong'})
+    } else {
+      req.login(user, (err) => {
+        if(err) throw(err)
+        console.log('req login :', user)
+        console.log('login req.session', req.session)
+        res.send(JSON.stringify(user))
+      })
+    }
+  })(req,res,next);
+})
   // const user_id = results.userID;
   // console.log('user.id: ', req.id)
   // req.login(req.id)
@@ -28,5 +41,4 @@ loginRouter.post('/', passport.authenticate('local',  (req, res) => {
   //     console.log(token)
   //     res.json({'token': token})
   //   })
-  })
-)
+

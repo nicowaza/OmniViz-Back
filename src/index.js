@@ -5,8 +5,10 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
+
 //authentication packages
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const passport = require('passport');
 require('./helpers/passport').default(passport)
 
@@ -19,20 +21,18 @@ import { realtimeRouter } from './routes/index';
 import { userRouter } from './routes/users';
 import { loginRouter } from './routes/login';
 
-
 //static files
 app.use(express.static('public'));
-
 
 //logger
 app.use(morgan('combined'));
 
+//CROSS ORIGINS
 app.use(cors({
   origin:'http://localhost:8080',
   methods:['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -40,10 +40,21 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(expressValidator());
 
+//mySQLStore
+const options = {
+  host: 'localhost',
+  // port: 5000,
+  user: 'root',
+  password: '',
+  database: 'OmnivizTest'
+};
+const sessionStore = new MySQLStore(options);
+
 // express sessions
 app.use(session({
   secret: 'thedudeabides',
   name: 'sid',
+  store: sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -54,7 +65,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-
 // Socket Setup
 const io = socket(server);
 
@@ -62,13 +72,12 @@ app.use('/realtime', realtimeRouter);
 app.use('/users', userRouter);
 app.use('/login', loginRouter);
 
-app.get('/', (req, res, next) => {
-  // req.session.name = 'nico';
-  console.log(req.session)
-  console.log('req.user :', req.user);
-  console.log('authenticated :', req.isAuthenticated());
+app.get('/', (req, res) => {
+  res.send('hello world')
+  console.log('get req session user', req.session.passport)
+  console.log('authenticated :', req.isAuthenticated())
+  // })(req,res,next);
 })
-
 
 // // error handler
 // app.use(function(err, req, res, next) {
