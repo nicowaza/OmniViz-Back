@@ -273,7 +273,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
 /* harmony import */ var _routes_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./routes/index */ "./src/routes/index.js");
 /* harmony import */ var _routes_users__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js");
-/* harmony import */ var _routes_login__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./routes/login */ "./src/routes/login.js");
 const express = __webpack_require__(/*! express */ "express");
 
 const socket = __webpack_require__(/*! socket.io */ "socket.io");
@@ -301,7 +300,6 @@ __webpack_require__(/*! ./helpers/passport */ "./src/helpers/passport.js").defau
 const app = express();
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
-
 
  //static files
 
@@ -350,10 +348,10 @@ app.use(passport.session()); // Socket Setup
 const io = socket(server);
 app.use('/realtime', _routes_index__WEBPACK_IMPORTED_MODULE_1__["realtimeRouter"]);
 app.use('/users', _routes_users__WEBPACK_IMPORTED_MODULE_2__["userRouter"]);
-app.use('/login', _routes_login__WEBPACK_IMPORTED_MODULE_3__["loginRouter"]);
 app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (req, res) => {
   res.send('hello world');
   console.log('get req session user', req.session.passport);
+  console.log('username', req.username);
   console.log('authenticated :', req.isAuthenticated()); // })(req,res,next);
 }); // // error handler
 // app.use(function(err, req, res, next) {
@@ -396,7 +394,7 @@ app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (
 /*!*****************************!*\
   !*** ./src/routes/index.js ***!
   \*****************************/
-/*! exports provided: realtimeRouter, userRouter, loginRouter */
+/*! exports provided: realtimeRouter, userRouter */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -407,50 +405,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _users__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./users */ "./src/routes/users.js");
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "userRouter", function() { return _users__WEBPACK_IMPORTED_MODULE_1__["userRouter"]; });
 
-/* harmony import */ var _login__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./login */ "./src/routes/login.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "loginRouter", function() { return _login__WEBPACK_IMPORTED_MODULE_2__["loginRouter"]; });
 
 
-
-
-
-/***/ }),
-
-/***/ "./src/routes/login.js":
-/*!*****************************!*\
-  !*** ./src/routes/login.js ***!
-  \*****************************/
-/*! exports provided: loginRouter */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "loginRouter", function() { return loginRouter; });
-const express = __webpack_require__(/*! express */ "express"); // import jwt from '../helpers/jwt';
-// import 'dotenv/config';
-// import connection from '../helpers/db.connexion';
-// const secret = process.env.key;
-
-
-const passport = __webpack_require__(/*! passport */ "passport");
-
-__webpack_require__(/*! ../helpers/passport */ "./src/helpers/passport.js").default(passport);
-
-const loginRouter = express.Router(); // const user_id = results.userID;
-// console.log('user.id: ', req.id)
-// req.login(req.id)
-// const { password, email } = req.body
-// // const user = _users.find((user) => user.username === req.body.username);
-// let query = `SELECT * FROM users WHERE email = '${email}'`;
-// connection.query(query, (err, results) => {
-//   if(results.length === 0) return res.status(404).send('User not found')
-//     if(results[0].password !== password) return res.status(404).send('Password incorrect')
-//     const token = jwt.issue({
-//       email
-//     }, secret, {expiresIn: 18000})
-//     console.log(token)
-//     res.json({'token': token})
-//   })
 
 /***/ }),
 
@@ -492,6 +448,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(express__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
 /* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
+
 
 
 
@@ -506,24 +464,39 @@ const passport = __webpack_require__(/*! passport */ "passport");
 __webpack_require__(/*! ../helpers/passport */ "./src/helpers/passport.js").default(passport);
 
 const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
-userRouter.get('/', (req, res) => {
-  _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query('SELECT * FROM users ', (err, results, fields) => {
-    if (err) {
-      console.log(err);
-      res.status(400).send({
-        status: false,
-        message: 'User not created'
-      }); // res.send({
-      //   err
-      // })
-    } else {
-      console.log(results);
-      res.status(200).send({
-        status: true,
-        content: results
-      });
-    }
-  });
+userRouter.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_2__["verifiedAuth"], (req, res, next) => {
+  //les data du user authentifié peuvent être retrouvées dans l'objet req.user
+  const user = req.user[0];
+  const userdata = {
+    username: user.username,
+    email: user.email
+  };
+  console.log('user data', userdata);
+  console.log('the request session object', req.session);
+  console.log('the serialized user from passport', req.user);
+  res.send({
+    status: 200,
+    userdata: userdata
+  }); // passport.authenticate('local', (errors, user) =>{
+  //   if(errors) {
+  //     throw errors
+  //   } else {
+  //     // console.log('username', req.user.username)
+  //     res.send(JSON.stringify(user.username))
+  //   }
+  // })(req,res,next);
+  // connection.query('SELECT * FROM users ', (err, results, fields) => {
+  //   if (err) {
+  //     console.log(err);
+  //     res.status(400).send({ status: false, message: 'User not created'})
+  //     // res.send({
+  //     //   err
+  //     // })
+  //   }else {
+  //     console.log(results)
+  //     res.status(200).send({status: true, content: results});
+  //   }
+  // });
 });
 userRouter.post('/register', (req, res) => {
   console.log('ça marche');
@@ -559,8 +532,8 @@ userRouter.post('/register', (req, res) => {
     bcrypt.hash(password, saltRounds, function (err, hash) {
       let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
       _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query(query, (err, results, fields) => {
-        if (err) {
-          console.log(err);
+        if (errors) {
+          console.log(errors);
           res.status(400).send({
             status: false,
             message: 'User not created'
@@ -582,8 +555,8 @@ userRouter.post('/register', (req, res) => {
   ;
 });
 userRouter.post('/login', (req, res, next) => {
-  passport.authenticate('local', (err, user) => {
-    if (err) {
+  passport.authenticate('local', (errors, user) => {
+    if (errors) {
       res.send({
         status: 500,
         message: 'something went wrong'
@@ -593,10 +566,20 @@ userRouter.post('/login', (req, res, next) => {
         if (err) throw err;
         console.log('req login :', user);
         console.log('login req.session', req.session);
+        console.log('req.user :', req.user);
         res.send(JSON.stringify(user));
       });
     }
   })(req, res, next);
+});
+userRouter.get('/logout', (req, res) => {
+  req.logout();
+  req.session.destroy();
+  console.log('authenticated :', req.isAuthenticated());
+  res.send({
+    status: 200,
+    message: 'user has logged out'
+  });
 });
 
 /***/ }),

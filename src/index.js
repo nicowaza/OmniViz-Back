@@ -19,7 +19,6 @@ const server = app.listen(port, () => console.log(`server is running on port ${p
 
 import { realtimeRouter } from './routes/index';
 import { userRouter } from './routes/users';
-import { loginRouter } from './routes/login';
 
 //static files
 app.use(express.static('public'));
@@ -70,11 +69,12 @@ const io = socket(server);
 
 app.use('/realtime', realtimeRouter);
 app.use('/users', userRouter);
-app.use('/login', loginRouter);
+
 
 app.get('/', verifiedAuth, (req, res) => {
   res.send('hello world')
   console.log('get req session user', req.session.passport)
+  console.log('username', req.username)
   console.log('authenticated :', req.isAuthenticated())
   // })(req,res,next);
 })

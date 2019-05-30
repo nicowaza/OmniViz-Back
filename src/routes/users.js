@@ -1,5 +1,6 @@
 import express from 'express';
 import connection from '../helpers/db.connexion';
+import { verifiedAuth } from '../helpers/verifyAuth';
 const mysql = require('mysql');
 const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
@@ -9,19 +10,41 @@ require('../helpers/passport').default(passport);
 export const userRouter = express.Router();
 
 
-userRouter.get('/', (req, res) => {
-  connection.query('SELECT * FROM users ', (err, results, fields) => {
-    if (err) {
-      console.log(err);
-      res.status(400).send({ status: false, message: 'User not created'})
-      // res.send({
-      //   err
-      // })
-    }else {
-      console.log(results)
-      res.status(200).send({status: true, content: results});
-    }
-  });
+userRouter.get('/', verifiedAuth, (req, res, next) => {
+  //les data du user authentifié peuvent être retrouvées dans l'objet req.user
+  const user = req.user[0];
+  const userdata = {
+    username: user.username,
+    email: user.email
+  };
+
+  console.log('user data', userdata)
+  console.log('the request session object', req.session);
+  console.log('the serialized user from passport', req.user);
+
+  res.send({status: 200, userdata: userdata})// passport.authenticate('local', (errors, user) =>{
+  //   if(errors) {
+  //     throw errors
+  //   } else {
+  //     // console.log('username', req.user.username)
+  //     res.send(JSON.stringify(user.username))
+  //   }
+
+  // })(req,res,next);
+
+
+  // connection.query('SELECT * FROM users ', (err, results, fields) => {
+  //   if (err) {
+  //     console.log(err);
+  //     res.status(400).send({ status: false, message: 'User not created'})
+  //     // res.send({
+  //     //   err
+  //     // })
+  //   }else {
+  //     console.log(results)
+  //     res.status(200).send({status: true, content: results});
+  //   }
+  // });
 });
 
 userRouter.post('/register', (req, res) => {
@@ -63,8 +86,8 @@ userRouter.post('/register', (req, res) => {
       let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
 
       connection.query(query, (err, results, fields) => {
-        if (err) {
-          console.log(err);
+        if (errors) {
+          console.log(errors);
           res.status(400).send({ status: false, message: 'User not created'})
         }else{
           console.log(results);
@@ -80,16 +103,24 @@ userRouter.post('/register', (req, res) => {
 });
 
 userRouter.post('/login', (req, res, next) => {
-  passport.authenticate('local',  (err, user) => {
-    if(err){
+  passport.authenticate('local',  (errors, user) => {
+    if(errors){
       res.send({status: 500, message: 'something went wrong'})
     } else {
       req.login(user, (err) => {
         if(err) throw(err)
         console.log('req login :', user)
         console.log('login req.session', req.session)
+        console.log('req.user :' ,req.user)
         res.send(JSON.stringify(user))
       })
     }
   })(req,res,next);
+});
+
+userRouter.get('/logout', (req, res) => {
+  req.logout();
+  req.session.destroy();
+  console.log('authenticated :', req.isAuthenticated())
+  res.send(({status: 200, message: 'user has logged out'}))
 })
