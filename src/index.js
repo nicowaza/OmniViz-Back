@@ -21,7 +21,7 @@ import { realtimeRouter } from './routes/index';
 import { userRouter } from './routes/users';
 
 //static files
-app.use(express.static('public'));
+app.use(express.static('../public'));
 
 //logger
 app.use(morgan('combined'));

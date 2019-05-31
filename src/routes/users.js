@@ -112,6 +112,7 @@ userRouter.post('/login', (req, res, next) => {
         console.log('req login :', user)
         console.log('login req.session', req.session)
         console.log('req.user :' ,req.user)
+        console.log('authenticated :', req.isAuthenticated())
         res.send(JSON.stringify(user))
       })
     }

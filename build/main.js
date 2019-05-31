@@ -303,7 +303,7 @@ const server = app.listen(port, () => console.log(`server is running on port ${p
 
  //static files
 
-app.use(express.static('public')); //logger
+app.use(express.static('../public')); //logger
 
 app.use(morgan('combined')); //CROSS ORIGINS
 
@@ -567,6 +567,7 @@ userRouter.post('/login', (req, res, next) => {
         console.log('req login :', user);
         console.log('login req.session', req.session);
         console.log('req.user :', req.user);
+        console.log('authenticated :', req.isAuthenticated());
         res.send(JSON.stringify(user));
       });
     }
