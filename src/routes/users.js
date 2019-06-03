@@ -118,32 +118,33 @@ export default function(app, passport, io) {
           console.log('authenticated :', req.isAuthenticated())
           res.send(JSON.stringify(user))
         })
-        console.log(io);
+        // console.log(io);
         const userSockets = {}
-        io.on('connection', function(socket) {
-          console.log('A client has connected');
-          console.log('the socket session object', socket.request.session);
-          console.log('the actual serialized user from passport', socket.request.session.passport.user);
-          //store '_id' of connected user in order to access it easily
-          const ID = socket.request.session.passport.user;
-          //store actual socket of connected user in order to access it easily
-          //from other modules e.g. from router
-          userSockets[ID] = socket;
-          connection.query("SELECT * FROM users WHERE userID = ? ",[ID], function(err, user){
-            if(err){
-              console.log(err)
-              throw(err)
-            } else {
-              // console.log(user)
-              const firstname = user[0].firstname;
-              const email = user[0].email;
-              const username = user[0].username;
+        // io.on('connection', function(socket) {
+        //   console.log('A client has connected');
+        //   console.log('the socket session object', socket.request.session);
+        //   console.log('the actual serialized user from passport', socket.request.session.passport.user);
+        //   //store '_id' of connected user in order to access it easily
+        //   const ID = socket.request.session.passport.user;
+        //   //store actual socket of connected user in order to access it easily
+        //   //from other modules e.g. from router
+        //   userSockets[ID] = socket;
+        //   connection.query("SELECT * FROM users WHERE userID = ? ",[ID], function(err, user){
+        //     if(err){
+        //       console.log(err)
+        //       throw(err)
+        //     } else {
+        //       // console.log(user)
+        //       const firstname = user[0].firstname;
+        //       const email = user[0].email;
+        //       const username = user[0].username;
 
-              console.log([firstname, username, email])
-              return socket.emit('welcome', `hello ${firstname} you are connected as ${username}`)
-            }
-          })
-        });
+        //       console.log([firstname, username, email])
+        //       console.log(socket)
+        //       return socket.emit('welcome', `hello ${firstname} you are connected as ${username}`)
+        //     }
+        //   })
+        // });
        }
     })(req,res,next);
   });

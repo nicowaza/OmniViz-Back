@@ -367,31 +367,36 @@ app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (
 //   res.locals.message = err.message;
 //   res.locals.error = req.app.get('env') === 'development' ? err : {};
 // })
-// const userSockets = {}
-// io.on('connection', function(socket) {
-//   console.log('A client has connected');
-//   console.log('the socket session object', socket.request.session);
-//   console.log('the actual serialized user from passport', socket.request.session.passport.user);
-//   //store '_id' of connected user in order to access it easily
-//   const ID = socket.request.session.passport.user;
-//   //store actual socket of connected user in order to access it easily
-//   //from other modules e.g. from router
-//   userSockets[ID] = socket;
-//   connection.query("SELECT * FROM users WHERE userID = ? ",[ID], function(err, user){
-//     if(err){
-//       console.log(err)
-//       throw(err)
-//     } else {
-//       // console.log(user)
-//       const firstname = user[0].firstname;
-//       const email = user[0].email;
-//       const username = user[0].username;
-//       console.log([firstname, username, email])
-//       return socket.emit('welcome', `hello ${firstname} you are connected as ${username}`)
-//     }
-//     })
-//   });
-// // io.on('connection', function(socket){
+
+const userSockets = {};
+io.on('connection', function (socket) {
+  console.log('A client has connected');
+  console.log('the socket session object', socket.request.session);
+  console.log('the actual serialized user from passport', socket.request.session.passport.user); //store '_id' of connected user in order to access it easily
+
+  const ID = socket.request.session.passport.user; //store actual socket of connected user in order to access it easily
+  //from other modules e.g. from router
+
+  userSockets[ID] = socket;
+  _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query("SELECT * FROM users WHERE userID = ? ", [ID], function (err, user) {
+    if (err) {
+      console.log(err);
+      throw err;
+    } else {
+      // console.log(user)
+      const firstname = user[0].firstname;
+      const email = user[0].email;
+      const username = user[0].username;
+      console.log([firstname, username, email]);
+      return socket.emit('welcome', `hello ${firstname} you are connected as ${username}`);
+    }
+  });
+  console.log('socket :', userSockets[ID]);
+  socket.on('disconnect', function () {
+    delete userSockets[ID];
+    return console.log('The client has disconnected');
+  });
+}); // // io.on('connection', function(socket){
 // //   socket.on('connect', function() {
 // //     io.emit('user connected');
 // //   });
@@ -403,22 +408,6 @@ app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (
 // //   socket.on('pingServer', (data) => {
 // //     console.log(data)
 // //   })
-// //   socket.on('join', (data) => {
-// //     console.log('username: ', data.username);
-// //     console.log('room: ', data.room)
-// //     console.log('id: ', socket.id)
-// //     const user = data.username;
-// //     const room = data.room;
-// //     const userId = socket.id;
-// //     socket.emit('roomCreation', {
-// //     user: user,
-// //     room: room,
-// //     userId: userId
-// //     });
-// //     socket.join(room, console.log(`${user} has joined ${room}`));
-// //     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
-// //     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
-// //     })
 
 /***/ }),
 
@@ -561,32 +550,32 @@ const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
 
           console.log('authenticated :', req.isAuthenticated());
           res.send(JSON.stringify(user));
-        });
-        console.log(io);
-        const userSockets = {};
-        io.on('connection', function (socket) {
-          console.log('A client has connected');
-          console.log('the socket session object', socket.request.session);
-          console.log('the actual serialized user from passport', socket.request.session.passport.user); //store '_id' of connected user in order to access it easily
+        }); // console.log(io);
 
-          const ID = socket.request.session.passport.user; //store actual socket of connected user in order to access it easily
-          //from other modules e.g. from router
-
-          userSockets[ID] = socket;
-          _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query("SELECT * FROM users WHERE userID = ? ", [ID], function (err, user) {
-            if (err) {
-              console.log(err);
-              throw err;
-            } else {
-              // console.log(user)
-              const firstname = user[0].firstname;
-              const email = user[0].email;
-              const username = user[0].username;
-              console.log([firstname, username, email]);
-              return socket.emit('welcome', `hello ${firstname} you are connected as ${username}`);
-            }
-          });
-        });
+        const userSockets = {}; // io.on('connection', function(socket) {
+        //   console.log('A client has connected');
+        //   console.log('the socket session object', socket.request.session);
+        //   console.log('the actual serialized user from passport', socket.request.session.passport.user);
+        //   //store '_id' of connected user in order to access it easily
+        //   const ID = socket.request.session.passport.user;
+        //   //store actual socket of connected user in order to access it easily
+        //   //from other modules e.g. from router
+        //   userSockets[ID] = socket;
+        //   connection.query("SELECT * FROM users WHERE userID = ? ",[ID], function(err, user){
+        //     if(err){
+        //       console.log(err)
+        //       throw(err)
+        //     } else {
+        //       // console.log(user)
+        //       const firstname = user[0].firstname;
+        //       const email = user[0].email;
+        //       const username = user[0].username;
+        //       console.log([firstname, username, email])
+        //       console.log(socket)
+        //       return socket.emit('welcome', `hello ${firstname} you are connected as ${username}`)
+        //     }
+        //   })
+        // });
       }
     })(req, res, next);
   });
