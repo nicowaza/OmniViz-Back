@@ -271,8 +271,8 @@ const verifiedAuth = function (req, res, next) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
-/* harmony import */ var _routes_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./routes/index */ "./src/routes/index.js");
-/* harmony import */ var _routes_users__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js");
+/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./helpers/db.connexion */ "./src/helpers/db.connexion.js");
+/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__);
 const express = __webpack_require__(/*! express */ "express");
 
 const socket = __webpack_require__(/*! socket.io */ "socket.io");
@@ -283,9 +283,12 @@ const morgan = __webpack_require__(/*! morgan */ "morgan");
 
 const bodyParser = __webpack_require__(/*! body-parser */ "body-parser");
 
+const cookieParser = __webpack_require__(/*! cookie-parser */ "cookie-parser");
+
 const expressValidator = __webpack_require__(/*! express-validator */ "express-validator");
 
 const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
+
 
  //authentication packages
 
@@ -295,13 +298,15 @@ const MySQLStore = __webpack_require__(/*! express-mysql-session */ "express-mys
 
 const passport = __webpack_require__(/*! passport */ "passport");
 
+const passportSocketIo = __webpack_require__(/*! passport.socketio */ "passport.socketio");
+
 __webpack_require__(/*! ./helpers/passport */ "./src/helpers/passport.js").default(passport);
 
 const app = express();
 const port = process.env.PORT || 5000;
-const server = app.listen(port, () => console.log(`server is running on port ${port}`));
+const server = app.listen(port, () => console.log(`server is running on port ${port}`)); // Socket Setup
 
- //static files
+const io = socket(server); //static files
 
 app.use(express.static('../public')); //logger
 
@@ -320,6 +325,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: false
 }));
+app.use(cookieParser());
 app.use(expressValidator()); //mySQLStore
 
 const options = {
@@ -331,7 +337,7 @@ const options = {
 };
 const sessionStore = new MySQLStore(options); // express sessions
 
-app.use(session({
+const sessionMiddleware = session({
   secret: 'thedudeabides',
   name: 'sid',
   store: sessionStore,
@@ -341,95 +347,101 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 2 // cookie: { secure: true }
 
   }
+});
+app.use(sessionMiddleware);
+io.use(passportSocketIo.authorize({
+  cookieParser: cookieParser,
+  key: 'sid',
+  secret: 'thedudeabides',
+  store: sessionStore,
+  success: onAuthorizeSuccess,
+  fail: onAuthorizeFail
 }));
-app.use(passport.initialize());
-app.use(passport.session()); // Socket Setup
 
-const io = socket(server);
-app.use('/realtime', _routes_index__WEBPACK_IMPORTED_MODULE_1__["realtimeRouter"]);
-app.use('/users', _routes_users__WEBPACK_IMPORTED_MODULE_2__["userRouter"]);
+function onAuthorizeSuccess(data, accept) {
+  console.log('successful connection to socket.io'); // console.log(data)
+
+  accept();
+}
+
+function onAuthorizeFail(data, message, error, accept) {
+  // error indicates whether the fail is due to an error or just a unauthorized client
+  if (error) throw new Error(message); // send the (not-fatal) error-message to the client and deny the connection
+
+  return accept(new Error(message));
+} //passport session
+
+
+app.use(passport.initialize());
+app.use(passport.session()); // io.use((socket,next) => {
+//   sessionMiddleware(socket.request, socket.request.res || {}, next);
+// });
+// app.use('/realtime', realtimeRouter);
+
+const userRouter = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js").default(io, passport, app);
+
+app.use('/users', userRouter);
 app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (req, res) => {
   res.send('hello world');
   console.log('get req session user', req.session.passport);
   console.log('username', req.username);
   console.log('authenticated :', req.isAuthenticated()); // })(req,res,next);
-}); // // error handler
-// app.use(function(err, req, res, next) {
-//   // set locals, only providing error in development
-//   res.locals.message = err.message;
-//   res.locals.error = req.app.get('env') === 'development' ? err : {};
-// })
-// // io.on('connection', function(socket){
-// //   socket.on('connect', function() {
-// //     io.emit('user connected');
-// //   });
-// //   socket.on('disconnect', function () {
-// //     io.emit('user disconnected');
-// //   });
-// //   console.log('socket connected', socket.id)
-// //   socket.emit('messageChannel', 'hello')
-// //   socket.on('pingServer', (data) => {
-// //     console.log(data)
-// //   })
-// //   socket.on('join', (data) => {
-// //     console.log('username: ', data.username);
-// //     console.log('room: ', data.room)
-// //     console.log('id: ', socket.id)
-// //     const user = data.username;
-// //     const room = data.room;
-// //     const userId = socket.id;
-// //     socket.emit('roomCreation', {
-// //     user: user,
-// //     room: room,
-// //     userId: userId
-// //     });
-// //     socket.join(room, console.log(`${user} has joined ${room}`));
-// //     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
-// //     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
-// //     })
+});
+io.on('connection', function (socket) {
+  socket.on('join', data => {
+    if (socket.request.user && socket.request.user.logged_in) {
+      const socketUser = socket.request.user; // console.log('username: ', socketUser.username);
+      // console.log('room: ', data.room)
+      // console.log('id: ', socket.id)
 
-/***/ }),
+      const username = socketUser[0].username;
+      const room = data.room;
+      console.log('socket user :', socket.request.user);
+      console.log('username :', username); // const socketId = socket.id
 
-/***/ "./src/routes/index.js":
-/*!*****************************!*\
-  !*** ./src/routes/index.js ***!
-  \*****************************/
-/*! exports provided: realtimeRouter, userRouter */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _realtime__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./realtime */ "./src/routes/realtime.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "realtimeRouter", function() { return _realtime__WEBPACK_IMPORTED_MODULE_0__["realtimeRouter"]; });
-
-/* harmony import */ var _users__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./users */ "./src/routes/users.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "userRouter", function() { return _users__WEBPACK_IMPORTED_MODULE_1__["userRouter"]; });
-
-
-
-
-/***/ }),
-
-/***/ "./src/routes/realtime.js":
-/*!********************************!*\
-  !*** ./src/routes/realtime.js ***!
-  \********************************/
-/*! exports provided: realtimeRouter */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "realtimeRouter", function() { return realtimeRouter; });
-/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! express */ "express");
-/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(express__WEBPACK_IMPORTED_MODULE_0__);
-
-const realtimeRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
-realtimeRouter.post('/createCourse', (req, res) => {
-  const {
-    username,
-    courseName,
-    description
-  } = req.body;
+      socket.emit('roomCreation', {
+        username: username,
+        room: room
+      });
+      socket.join(room, console.log(`${username} has joined ${room}`));
+      socket.emit('joiningEvent', `${username} has joined the room ${room}`);
+      socket.broadcast.to(room).emit('joiningEvent', `${username} has joined the room ${room}`); // console.log(socket.request.user);
+    } else {
+      console.log('user not autorized to create room');
+    }
+  }); // // error handler
+  // app.use(function(err, req, res, next) {
+  //   // set locals, only providing error in development
+  //   res.locals.message = err.message;
+  //   res.locals.error = req.app.get('env') === 'development' ? err : {};
+  // })
+  // // io.on('connection', function(socket){
+  // //   socket.on('connect', function() {
+  // //     io.emit('user connected');
+  // //   });
+  // //   socket.on('disconnect', function () {
+  // //     io.emit('user disconnected');
+  // //   });
+  // //   console.log('socket connected', socket.id)
+  // //   socket.emit('messageChannel', 'hello')
+  // //   socket.on('pingServer', (data) => {
+  // //     console.log(data)
+  // //   })
+  // //   socket.on('join', (data) => {
+  // //     console.log('username: ', data.username);
+  // //     console.log('room: ', data.room)
+  // //     console.log('id: ', socket.id)
+  // //     const user = data.username;
+  // //     const room = data.room;
+  // //     const userId = socket.id;
+  // //     socket.emit('roomCreation', {
+  // //     user: user,
+  // //     room: room,
+  // //     userId: userId
+  // //     });
+  // //     socket.join(room, console.log(`${user} has joined ${room}`));
+  // //     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
+  // //     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
 });
 
 /***/ }),
@@ -438,12 +450,11 @@ realtimeRouter.post('/createCourse', (req, res) => {
 /*!*****************************!*\
   !*** ./src/routes/users.js ***!
   \*****************************/
-/*! exports provided: userRouter */
+/*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "userRouter", function() { return userRouter; });
 /* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! express */ "express");
 /* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(express__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
@@ -459,128 +470,160 @@ const expressValidator = __webpack_require__(/*! express-validator */ "express-v
 
 const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
+const socket = __webpack_require__(/*! socket.io */ "socket.io");
+
 const passport = __webpack_require__(/*! passport */ "passport");
 
-__webpack_require__(/*! ../helpers/passport */ "./src/helpers/passport.js").default(passport);
+__webpack_require__(/*! ../helpers/passport */ "./src/helpers/passport.js").default(passport); // import { io } from '../index';
+
 
 const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
-userRouter.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_2__["verifiedAuth"], (req, res, next) => {
-  //les data du user authentifié peuvent être retrouvées dans l'objet req.user
-  const user = req.user[0];
-  const userdata = {
-    username: user.username,
-    email: user.email
-  };
-  console.log('user data', userdata);
-  console.log('the request session object', req.session);
-  console.log('the serialized user from passport', req.user);
-  res.send({
-    status: 200,
-    userdata: userdata
-  }); // passport.authenticate('local', (errors, user) =>{
-  //   if(errors) {
-  //     throw errors
-  //   } else {
-  //     // console.log('username', req.user.username)
-  //     res.send(JSON.stringify(user.username))
-  //   }
-  // })(req,res,next);
-  // connection.query('SELECT * FROM users ', (err, results, fields) => {
-  //   if (err) {
-  //     console.log(err);
-  //     res.status(400).send({ status: false, message: 'User not created'})
-  //     // res.send({
-  //     //   err
-  //     // })
-  //   }else {
-  //     console.log(results)
-  //     res.status(200).send({status: true, content: results});
-  //   }
-  // });
-});
-userRouter.post('/register', (req, res) => {
-  console.log('ça marche');
-  req.checkBody('username', 'Username field cannot be empty.').notEmpty();
-  req.checkBody('username', 'Username must be between 4-15 characters long.').len(4, 15);
-  req.checkBody('email', 'The email you entered is invalid, please try again.').isEmail();
-  req.checkBody('email', 'Email address must be between 4-100 characters long, please try again.').len(4, 100);
-  req.checkBody('email', 'Email field cannot be empty.').notEmpty();
-  req.checkBody('password', 'Password field cannot be empty.').notEmpty();
-  req.checkBody('password', 'Password must be between 8-100 characters long.').len(8, 100);
-  req.checkBody("password", "Password must include one lowercase character, one uppercase character, a number, and a special character.").matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?!.* )(?=.*[^a-zA-Z0-9]).{8,}$/, "i");
-  req.checkBody('confirmedPassword', 'Password must be between 8-100 characters long.').len(8, 100);
-  req.checkBody('confirmedPassword', 'Passwords do not match, please try again.').equals(req.body.password);
-  const errors = req.validationErrors();
-
-  if (errors) {
-    console.log(`errors: ${JSON.stringify(errors)}`);
+/* harmony default export */ __webpack_exports__["default"] = (function (app, passport, io) {
+  userRouter.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_2__["verifiedAuth"], (req, res, next) => {
+    //les data du user authentifié peuvent être retrouvées dans l'objet req.user
+    const user = req.user[0];
+    const userdata = {
+      username: user.username,
+      email: user.email
+    };
+    console.log('user data', userdata);
+    console.log('the request session object', req.session);
+    console.log('the serialized user from passport', req.user);
+    console.log('the socket session object', socket.request.session);
+    console.log('the actual serialized user from passport', socket.request.session.passport.user);
     res.send({
-      errors: errors
-    });
-  } else {
-    let body = req.body;
-    let email = body.email;
-    let username = body.username;
-    let password = body.password;
-    let confirmedPassword = body.confirmedPassword;
-    let firstname = body.firstname;
-    let lastname = body.lastname;
-    let avatarUrl = body.avatarUrl;
-    let university = body.university;
-    let role = body.role;
-    const saltRounds = 10;
-    bcrypt.hash(password, saltRounds, function (err, hash) {
-      let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
-      _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query(query, (err, results, fields) => {
-        if (errors) {
-          console.log(errors);
-          res.status(400).send({
-            status: false,
-            message: 'User not created'
-          });
-        } else {
-          console.log(results);
-          res.send({
-            status: 200,
-            "success": "new user registered sucessfully",
-            content: results
-          });
-        }
+      status: 200,
+      userdata: userdata
+    }); // passport.authenticate('local', (errors, user) =>{
+    //   if(errors) {
+    //     throw errors
+    //   } else {
+    //     // console.log('username', req.user.username)
+    //     res.send(JSON.stringify(user.username))
+    //   }
+    // })(req,res,next);
+    // connection.query('SELECT * FROM users ', (err, results, fields) => {
+    //   if (err) {
+    //     console.log(err);
+    //     res.status(400).send({ status: false, message: 'User not created'})
+    //     // res.send({
+    //     //   err
+    //     // })
+    //   }else {
+    //     console.log(results)
+    //     res.status(200).send({status: true, content: results});
+    //   }
+    // });
+  });
+  userRouter.post('/register', (req, res) => {
+    req.checkBody('username', 'Username field cannot be empty.').notEmpty();
+    req.checkBody('username', 'Username must be between 4-15 characters long.').len(4, 15);
+    req.checkBody('email', 'The email you entered is invalid, please try again.').isEmail();
+    req.checkBody('email', 'Email address must be between 4-100 characters long, please try again.').len(4, 100);
+    req.checkBody('email', 'Email field cannot be empty.').notEmpty();
+    req.checkBody('password', 'Password field cannot be empty.').notEmpty();
+    req.checkBody('password', 'Password must be between 8-100 characters long.').len(8, 100);
+    req.checkBody("password", "Password must include one lowercase character, one uppercase character, a number, and a special character.").matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?!.* )(?=.*[^a-zA-Z0-9]).{8,}$/, "i");
+    req.checkBody('confirmedPassword', 'Password must be between 8-100 characters long.').len(8, 100);
+    req.checkBody('confirmedPassword', 'Passwords do not match, please try again.').equals(req.body.password);
+    const errors = req.validationErrors();
 
-        ;
-      });
-    });
-  }
-
-  ;
-});
-userRouter.post('/login', (req, res, next) => {
-  passport.authenticate('local', (errors, user) => {
     if (errors) {
+      console.log(`errors: ${JSON.stringify(errors)}`);
       res.send({
-        status: 500,
-        message: 'something went wrong'
+        errors: errors
       });
     } else {
-      req.login(user, err => {
-        if (err) throw err;
-        console.log('req login :', user);
-        console.log('login req.session', req.session);
-        console.log('req.user :', req.user);
-        console.log('authenticated :', req.isAuthenticated());
-        res.send(JSON.stringify(user));
+      let body = req.body;
+      let email = body.email;
+      let username = body.username;
+      let password = body.password;
+      let confirmedPassword = body.confirmedPassword;
+      let firstname = body.firstname;
+      let lastname = body.lastname;
+      let avatarUrl = body.avatarUrl;
+      let university = body.university;
+      let role = body.role;
+      const saltRounds = 10;
+      bcrypt.hash(password, saltRounds, function (err, hash) {
+        let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
+        _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query(query, (err, results, fields) => {
+          if (errors) {
+            console.log(errors);
+            res.status(400).send({
+              status: false,
+              message: 'User not created'
+            });
+          } else {
+            console.log(results);
+            res.send({
+              status: 200,
+              "success": "new user registered sucessfully",
+              content: results
+            });
+          }
+
+          ;
+        });
       });
     }
-  })(req, res, next);
-});
-userRouter.get('/logout', (req, res) => {
-  req.logout();
-  req.session.destroy();
-  console.log('authenticated :', req.isAuthenticated());
-  res.send({
-    status: 200,
-    message: 'user has logged out'
+
+    ;
   });
+  userRouter.post('/login', (req, res, next) => {
+    passport.authenticate('local', (errors, user) => {
+      if (errors) {
+        res.send({
+          status: 500,
+          message: 'something went wrong'
+        });
+      } else {
+        req.login(user, err => {
+          if (err) throw err; // console.log('req login :', user)
+          // console.log('login req.session', req.session)
+          // console.log('req.user :' ,req.user)
+
+          console.log('authenticated :', req.isAuthenticated());
+          res.send(JSON.stringify(user));
+        }); // console.log(io);
+
+        const userSockets = {}; // io.on('connection', function(socket) {
+        //   console.log('A client has connected');
+        //   console.log('the socket session object', socket.request.session);
+        //   console.log('the actual serialized user from passport', socket.request.session.passport.user);
+        //   //store '_id' of connected user in order to access it easily
+        //   const ID = socket.request.session.passport.user;
+        //   //store actual socket of connected user in order to access it easily
+        //   //from other modules e.g. from router
+        //   userSockets[ID] = socket;
+        //   connection.query("SELECT * FROM users WHERE userID = ? ",[ID], function(err, user){
+        //     if(err){
+        //       console.log(err)
+        //       throw(err)
+        //     } else {
+        //       // console.log(user)
+        //       const firstname = user[0].firstname;
+        //       const email = user[0].email;
+        //       const username = user[0].username;
+        //       console.log([firstname, username, email])
+        //       console.log(socket)
+        //       return socket.emit('welcome', `hello ${firstname} you are connected as ${username}`)
+        //     }
+        //   })
+        // });
+      }
+    })(req, res, next);
+  });
+  userRouter.get('/logout', (req, res) => {
+    req.logout();
+    req.session.destroy();
+    console.log('authenticated :', req.isAuthenticated());
+    res.send({
+      status: 200,
+      message: 'user has logged out'
+    });
+  });
+  return userRouter;
 });
 
 /***/ }),
@@ -616,6 +659,17 @@ module.exports = require("bcrypt");
 /***/ (function(module, exports) {
 
 module.exports = require("body-parser");
+
+/***/ }),
+
+/***/ "cookie-parser":
+/*!********************************!*\
+  !*** external "cookie-parser" ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("cookie-parser");
 
 /***/ }),
 
@@ -715,6 +769,17 @@ module.exports = require("passport");
 /***/ (function(module, exports) {
 
 module.exports = require("passport-local");
+
+/***/ }),
+
+/***/ "passport.socketio":
+/*!************************************!*\
+  !*** external "passport.socketio" ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("passport.socketio");
 
 /***/ }),
 
