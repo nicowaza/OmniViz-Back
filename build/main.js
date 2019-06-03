@@ -283,6 +283,8 @@ const morgan = __webpack_require__(/*! morgan */ "morgan");
 
 const bodyParser = __webpack_require__(/*! body-parser */ "body-parser");
 
+const cookieParser = __webpack_require__(/*! cookie-parser */ "cookie-parser");
+
 const expressValidator = __webpack_require__(/*! express-validator */ "express-validator");
 
 const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
@@ -302,17 +304,19 @@ const app = express();
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`)); // import { realtimeRouter } from './routes/index';
 // import { userRouter } from './routes/users';
-//static files
+// Socket Setup
 
-app.use(express.static('../public')); //logger
+const io = socket(server); //static files
 
-app.use(morgan('combined')); //CROSS ORIGINS
+app.use(express.static('../public')); //CROSS ORIGINS
 
 app.use(cors({
   origin: 'http://localhost:8080',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
-}));
+})); //logger
+
+app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({
   extended: true
@@ -321,6 +325,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: false
 }));
+app.use;
 app.use(expressValidator()); //mySQLStore
 
 const options = {
@@ -334,7 +339,7 @@ const sessionStore = new MySQLStore(options); // express sessions
 
 const sessionMiddleware = session({
   secret: 'thedudeabides',
-  name: 'sid',
+  name: 'sessionSid',
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
@@ -346,12 +351,16 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware); //passport session
 
 app.use(passport.initialize());
-app.use(passport.session()); // Socket Setup
+app.use(passport.session());
 
-const io = socket(server);
-io.use((socket, next) => {
-  sessionMiddleware(socket.request, socket.request.res || {}, next);
-}); // app.use('/realtime', realtimeRouter);
+const socketMiddleware = function (socket, next) {
+  sessionMiddleware(socket.handshake, {}, next);
+};
+
+io.use(socketMiddleware); // io.use((socket,next) => {
+//   sessionMiddleware(socket.request, {}, next);
+// });
+// app.use('/realtime', realtimeRouter);
 
 const userRouter = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js").default(io, passport, app);
 
@@ -367,11 +376,44 @@ app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (
 //   res.locals.message = err.message;
 //   res.locals.error = req.app.get('env') === 'development' ? err : {};
 // })
-// const userSockets = {}
+
+const userSockets = {};
+io.set("authorization", function (data, accept) {
+  //FOR SUCCESS
+  accept(null, true);
+  console.log(data.headers.cookie); //FOR FAILURE
+
+  return accept('Error Message.', false);
+}); // io.on('connection', function(socket) {
+//   console.log('A client has connected');
+//   console.log('the socket session object', socket.handshake.session);
+//   console.log('the actual serialized user from passport', socket.handshake.session.passport.user);
+//   //store '_id' of connected user in order to access it easily
+//   const ID = socket.handshake.session.passport.user;
+//   //store actual socket of connected user in order to access it easily
+//   //from other modules e.g. from router
+//   userSockets[ID] = socket;
+//   console.log(socket.user)
+//   connection.query("SELECT * FROM users WHERE userID = ? ",[ID], function(err, user){
+//     if(err){
+//       console.log(err)
+//       throw(err)
+//     } else {
+//       // console.log(user)
+//       const firstname = user[0].firstname;
+//       const email = user[0].email;
+//       const username = user[0].username;
+//       socket.user
+//       console.log([firstname, username, email])
+//       return socket.emit('welcome', `hello ${socket.user} you are connected as ${username}`)
+//     }
+//   })
+// });
 // io.on('connection', function(socket) {
 //   console.log('A client has connected');
-//   console.log('the socket session object', socket.request.session);
-//   console.log('the actual serialized user from passport', socket.request.session.passport.user);
+//   console.log('the socket session object', socket.handshake.session);
+//   console.log('the actual serialized user from passport', socket.handshake.session.passport.user);
+// });
 //   //store '_id' of connected user in order to access it easily
 //   const ID = socket.request.session.passport.user;
 //   //store actual socket of connected user in order to access it easily
@@ -403,22 +445,23 @@ app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (
 // //   socket.on('pingServer', (data) => {
 // //     console.log(data)
 // //   })
-// //   socket.on('join', (data) => {
-// //     console.log('username: ', data.username);
-// //     console.log('room: ', data.room)
-// //     console.log('id: ', socket.id)
-// //     const user = data.username;
-// //     const room = data.room;
-// //     const userId = socket.id;
-// //     socket.emit('roomCreation', {
-// //     user: user,
-// //     room: room,
-// //     userId: userId
-// //     });
-// //     socket.join(room, console.log(`${user} has joined ${room}`));
-// //     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
-// //     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
+//   socket.on('join', (data) => {
+//     console.log('username: ', data.username);
+//     console.log('room: ', data.room)
+//     console.log('id: ', socket.id)
+//     const user = data.username;
+//     const room = data.room;
+//     const userId = socket.id;
+//     socket.emit('roomCreation', {
+//     user: user,
+//     room: room,
+//     userId: userId
+//     });
+//     socket.join(room, console.log(`${user} has joined ${room}`));
+//     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
+//     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
 // //     })
+//   })
 
 /***/ }),
 
@@ -431,11 +474,10 @@ app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! express */ "express");
-/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(express__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
+/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
+/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
+const express = __webpack_require__(/*! express */ "express");
 
 
 
@@ -453,9 +495,9 @@ const passport = __webpack_require__(/*! passport */ "passport");
 __webpack_require__(/*! ../helpers/passport */ "./src/helpers/passport.js").default(passport); // import { io } from '../index';
 
 
-const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
+const userRouter = express.Router();
 /* harmony default export */ __webpack_exports__["default"] = (function (app, passport, io) {
-  userRouter.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_2__["verifiedAuth"], (req, res, next) => {
+  userRouter.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_1__["verifiedAuth"], (req, res, next) => {
     //les data du user authentifié peuvent être retrouvées dans l'objet req.user
     const user = req.user[0];
     const userdata = {
@@ -465,8 +507,6 @@ const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
     console.log('user data', userdata);
     console.log('the request session object', req.session);
     console.log('the serialized user from passport', req.user);
-    console.log('the socket session object', socket.request.session);
-    console.log('the actual serialized user from passport', socket.request.session.passport.user);
     res.send({
       status: 200,
       userdata: userdata
@@ -523,7 +563,7 @@ const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
       const saltRounds = 10;
       bcrypt.hash(password, saltRounds, function (err, hash) {
         let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
-        _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query(query, (err, results, fields) => {
+        _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query(query, (err, results, fields) => {
           if (errors) {
             console.log(errors);
             res.status(400).send({
@@ -561,19 +601,21 @@ const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
 
           console.log('authenticated :', req.isAuthenticated());
           res.send(JSON.stringify(user));
-        });
-        console.log(io);
+        }); // console.log(io);
+        // console.log('socket :', socket.handshake.session);
+        // console.log('the actual serialized user from passport', socket.handshake.session.passport.user);
+
         const userSockets = {};
         io.on('connection', function (socket) {
           console.log('A client has connected');
-          console.log('the socket session object', socket.request.session);
-          console.log('the actual serialized user from passport', socket.request.session.passport.user); //store '_id' of connected user in order to access it easily
+          console.log('the socket session object', socket.handshake.session);
+          console.log('the actual serialized user from passport', socket.handshake.session.passport.user); //store '_id' of connected user in order to access it easily
 
-          const ID = socket.request.session.passport.user; //store actual socket of connected user in order to access it easily
+          const ID = socket.handshake.session.passport.user; //store actual socket of connected user in order to access it easily
           //from other modules e.g. from router
 
           userSockets[ID] = socket;
-          _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query("SELECT * FROM users WHERE userID = ? ", [ID], function (err, user) {
+          _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query("SELECT * FROM users WHERE userID = ? ", [ID], function (err, user) {
             if (err) {
               console.log(err);
               throw err;
@@ -635,6 +677,17 @@ module.exports = require("bcrypt");
 /***/ (function(module, exports) {
 
 module.exports = require("body-parser");
+
+/***/ }),
+
+/***/ "cookie-parser":
+/*!********************************!*\
+  !*** external "cookie-parser" ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("cookie-parser");
 
 /***/ }),
 

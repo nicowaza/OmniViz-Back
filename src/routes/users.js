@@ -1,4 +1,4 @@
-import express from 'express';
+const express = require ('express');
 import connection from '../helpers/db.connexion';
 import { verifiedAuth } from '../helpers/verifyAuth';
 const mysql = require('mysql');
@@ -23,8 +23,6 @@ export default function(app, passport, io) {
     console.log('user data', userdata)
     console.log('the request session object', req.session);
     console.log('the serialized user from passport', req.user);
-    console.log('the socket session object', socket.request.session);
-    console.log('the actual serialized user from passport', socket.request.session.passport.user);
     res.send({status: 200, userdata: userdata})
     // passport.authenticate('local', (errors, user) =>{
     //   if(errors) {
@@ -118,14 +116,16 @@ export default function(app, passport, io) {
           console.log('authenticated :', req.isAuthenticated())
           res.send(JSON.stringify(user))
         })
-        console.log(io);
+        // console.log(io);
+        // console.log('socket :', socket.handshake.session);
+        // console.log('the actual serialized user from passport', socket.handshake.session.passport.user);
         const userSockets = {}
         io.on('connection', function(socket) {
           console.log('A client has connected');
-          console.log('the socket session object', socket.request.session);
-          console.log('the actual serialized user from passport', socket.request.session.passport.user);
+          console.log('the socket session object', socket.handshake.session);
+          console.log('the actual serialized user from passport', socket.handshake.session.passport.user);
           //store '_id' of connected user in order to access it easily
-          const ID = socket.request.session.passport.user;
+          const ID = socket.handshake.session.passport.user;
           //store actual socket of connected user in order to access it easily
           //from other modules e.g. from router
           userSockets[ID] = socket;

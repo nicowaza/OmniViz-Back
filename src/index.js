@@ -3,6 +3,7 @@ const socket = require ('socket.io');
 const cors = require('cors');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser')
 const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
 import { verifiedAuth } from './helpers/verifyAuth';
@@ -22,12 +23,10 @@ const server = app.listen(port, () => console.log(`server is running on port ${p
 
 // import { realtimeRouter } from './routes/index';
 // import { userRouter } from './routes/users';
-
+// Socket Setup
+const io = socket(server);
 //static files
 app.use(express.static('../public'));
-
-//logger
-app.use(morgan('combined'));
 
 //CROSS ORIGINS
 app.use(cors({
@@ -36,10 +35,15 @@ app.use(cors({
   credentials: true
 }));
 
+//logger
+app.use(morgan('combined'));
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use
 app.use(expressValidator());
 
 //mySQLStore
@@ -55,7 +59,7 @@ const sessionStore = new MySQLStore(options);
 // express sessions
 const sessionMiddleware = session({
   secret: 'thedudeabides',
-  name: 'sid',
+  name: 'sessionSid',
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
@@ -70,12 +74,14 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Socket Setup
-const io = socket(server);
+const socketMiddleware = function(socket, next) {
+  sessionMiddleware(socket.handshake, {}, next);
+}
 
-io.use((socket,next) => {
-  sessionMiddleware(socket.request, socket.request.res || {}, next);
-});
+io.use(socketMiddleware);
+// io.use((socket,next) => {
+//   sessionMiddleware(socket.request, {}, next);
+// });
 
 // app.use('/realtime', realtimeRouter);
 const userRouter = require('./routes/users').default(io, passport, app);
@@ -97,11 +103,50 @@ app.get('/', verifiedAuth, (req, res) => {
 //   res.locals.message = err.message;
 //   res.locals.error = req.app.get('env') === 'development' ? err : {};
 // })
-// const userSockets = {}
+const userSockets = {}
+io.set("authorization", function(data, accept) {
+  //FOR SUCCESS
+  accept(null, true);
+  console.log(data.headers.cookie)
+
+
+  //FOR FAILURE
+  return accept('Error Message.', false);
+});
+
 // io.on('connection', function(socket) {
 //   console.log('A client has connected');
-//   console.log('the socket session object', socket.request.session);
-//   console.log('the actual serialized user from passport', socket.request.session.passport.user);
+//   console.log('the socket session object', socket.handshake.session);
+//   console.log('the actual serialized user from passport', socket.handshake.session.passport.user);
+//   //store '_id' of connected user in order to access it easily
+//   const ID = socket.handshake.session.passport.user;
+//   //store actual socket of connected user in order to access it easily
+//   //from other modules e.g. from router
+//   userSockets[ID] = socket;
+//   console.log(socket.user)
+//   connection.query("SELECT * FROM users WHERE userID = ? ",[ID], function(err, user){
+//     if(err){
+//       console.log(err)
+//       throw(err)
+//     } else {
+//       // console.log(user)
+//       const firstname = user[0].firstname;
+//       const email = user[0].email;
+//       const username = user[0].username;
+
+//       socket.user
+//       console.log([firstname, username, email])
+
+//       return socket.emit('welcome', `hello ${socket.user} you are connected as ${username}`)
+
+//     }
+//   })
+// });
+// io.on('connection', function(socket) {
+//   console.log('A client has connected');
+//   console.log('the socket session object', socket.handshake.session);
+//   console.log('the actual serialized user from passport', socket.handshake.session.passport.user);
+// });
 //   //store '_id' of connected user in order to access it easily
 //   const ID = socket.request.session.passport.user;
 //   //store actual socket of connected user in order to access it easily
@@ -134,20 +179,20 @@ app.get('/', verifiedAuth, (req, res) => {
 // //   socket.on('pingServer', (data) => {
 // //     console.log(data)
 // //   })
-// //   socket.on('join', (data) => {
-// //     console.log('username: ', data.username);
-// //     console.log('room: ', data.room)
-// //     console.log('id: ', socket.id)
-// //     const user = data.username;
-// //     const room = data.room;
-// //     const userId = socket.id;
-// //     socket.emit('roomCreation', {
-// //     user: user,
-// //     room: room,
-// //     userId: userId
-// //     });
-// //     socket.join(room, console.log(`${user} has joined ${room}`));
-// //     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
-// //     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
+//   socket.on('join', (data) => {
+//     console.log('username: ', data.username);
+//     console.log('room: ', data.room)
+//     console.log('id: ', socket.id)
+//     const user = data.username;
+//     const room = data.room;
+//     const userId = socket.id;
+//     socket.emit('roomCreation', {
+//     user: user,
+//     room: room,
+//     userId: userId
+//     });
+//     socket.join(room, console.log(`${user} has joined ${room}`));
+//     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
+//     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
 // //     })
-
+//   })
