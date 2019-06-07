@@ -123,7 +123,36 @@ app.get('/', verifiedAuth, (req, res) => {
   // })(req,res,next);
 })
 
+io.on('connection', function(socket, message) {
+  console.log('A client has connected');
+  console.log('socket.request.user', socket.request.user)
 
+  socket.on('join', (data) => {
+    if (socket.request.user && socket.request.user.logged_in) {
+
+      const socketUser = socket.request.user
+      // console.log('username: ', socketUser.username);
+      // console.log('room: ', data.room)
+      // console.log('id: ', socket.id)
+      const username = socketUser[0].username;
+      const room = data.room;
+      console.log('socket:', socketUser)
+      console.log('socket user :', socket.request.user)
+      console.log('username :', username)
+      // const socketId = socket.id
+      socket.emit('roomCreation', {
+      username: username,
+      room: room,
+      });
+      socket.join(room, console.log(`${username} has joined ${room}`));
+      socket.emit('joiningEvent', `${username} has joined the room ${room}`);
+      socket.broadcast.to(room).emit('joiningEvent', `${username} has joined the room ${room}`);// console.log(socket.request.user);
+      } else {
+        //Ne marche pas...trouver la solution
+        console.log('unauthorized')
+    }
+  });
+})
 // io.on('connection', function(socket, message) {
 
 

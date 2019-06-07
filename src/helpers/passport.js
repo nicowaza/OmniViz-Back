@@ -75,7 +75,7 @@ export default function(passport) {
                 if (results.length === 0) {
                     // console.log('no user found');
                     // res.send('no user found')
-                    return done(null, null, { message : 'no user found' });
+                    return done(null, false, { message : 'no user found' });
                 } else {
                     let hashedPassword = results[0].password;
                     // if the user is found but the password is wrong
@@ -92,7 +92,7 @@ export default function(passport) {
                         } else {
                                 console.log('wrong password')
                                 // res.send({status: 403, errors: 'wrong password'})
-                                return done(null, null, { message: 'incorrect password'}); // create the loginMessage and save it to session as flashdata
+                                return done(null, false, { message: 'incorrect password'}); // create the loginMessage and save it to session as flashdata
                             }
                         // if(err) {
                         //     console.log(err);

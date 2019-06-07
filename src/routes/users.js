@@ -138,39 +138,8 @@ export default function(app, passport, io) {
       //     //renvoie isAuthenticated à true dans le front
       //     res.send({errors: err, isAuthenticated: req.isAuthenticated()})
       //   })
-        console.log(io);
+        // console.log(io);
         const userSockets = {}
-          io.on('connection', function(socket, message) {
-            console.log('A client has connected');
-            // console.log('the socket session object', socket.handshake.session);
-            console.log('the actual serialized user from passport', socket.handshake.session.passport.user);
-            console.log('socket.request.user', socket.request.user)
-
-            socket.on('join', (data) => {
-              if (socket.request.user && socket.request.user.logged_in) {
-
-                const socketUser = socket.request.user
-                // console.log('username: ', socketUser.username);
-                // console.log('room: ', data.room)
-                // console.log('id: ', socket.id)
-                const username = socketUser[0].username;
-                const room = data.room;
-                console.log('socket:', socketUser)
-                console.log('socket user :', socket.request.user)
-                console.log('username :', username)
-                // const socketId = socket.id
-                socket.emit('roomCreation', {
-                username: username,
-                room: room,
-                });
-                socket.join(room, console.log(`${username} has joined ${room}`));
-                socket.emit('joiningEvent', `${username} has joined the room ${room}`);
-                socket.broadcast.to(room).emit('joiningEvent', `${username} has joined the room ${room}`);// console.log(socket.request.user);
-              } else if(!socket.request.user.logged_in){
-
-            }
-          });
-        })
       }
         // io.on('connection', function(socket) {
         //   console.log('A client has connected');

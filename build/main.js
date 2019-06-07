@@ -201,7 +201,7 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
       if (results.length === 0) {
         // console.log('no user found');
         // res.send('no user found')
-        return done(null, null, {
+        return done(null, false, {
           message: 'no user found'
         });
       } else {
@@ -223,7 +223,7 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
           } else {
             console.log('wrong password'); // res.send({status: 403, errors: 'wrong password'})
 
-            return done(null, null, {
+            return done(null, false, {
               message: 'incorrect password'
             }); // create the loginMessage and save it to session as flashdata
           } // if(err) {
@@ -410,6 +410,34 @@ app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (
   console.log('get req session user', req.session.passport);
   console.log('username', req.username);
   console.log('authenticated :', req.isAuthenticated()); // })(req,res,next);
+});
+io.on('connection', function (socket, message) {
+  console.log('A client has connected');
+  console.log('socket.request.user', socket.request.user);
+  socket.on('join', data => {
+    if (socket.request.user && socket.request.user.logged_in) {
+      const socketUser = socket.request.user; // console.log('username: ', socketUser.username);
+      // console.log('room: ', data.room)
+      // console.log('id: ', socket.id)
+
+      const username = socketUser[0].username;
+      const room = data.room;
+      console.log('socket:', socketUser);
+      console.log('socket user :', socket.request.user);
+      console.log('username :', username); // const socketId = socket.id
+
+      socket.emit('roomCreation', {
+        username: username,
+        room: room
+      });
+      socket.join(room, console.log(`${username} has joined ${room}`));
+      socket.emit('joiningEvent', `${username} has joined the room ${room}`);
+      socket.broadcast.to(room).emit('joiningEvent', `${username} has joined the room ${room}`); // console.log(socket.request.user);
+    } else {
+      //Ne marche pas...trouver la solution
+      console.log('unauthorized');
+    }
+  });
 }); // io.on('connection', function(socket, message) {
 //   socket.on('join', (data) => {
 //     if (socket.request.user && socket.request.user.logged_in) {
@@ -630,36 +658,9 @@ const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
         //     //renvoie isAuthenticated à true dans le front
         //     res.send({errors: err, isAuthenticated: req.isAuthenticated()})
         //   })
+        // console.log(io);
 
-        console.log(io);
         const userSockets = {};
-        io.on('connection', function (socket, message) {
-          console.log('A client has connected'); // console.log('the socket session object', socket.handshake.session);
-
-          console.log('the actual serialized user from passport', socket.handshake.session.passport.user);
-          console.log('socket.request.user', socket.request.user);
-          socket.on('join', data => {
-            if (socket.request.user && socket.request.user.logged_in) {
-              const socketUser = socket.request.user; // console.log('username: ', socketUser.username);
-              // console.log('room: ', data.room)
-              // console.log('id: ', socket.id)
-
-              const username = socketUser[0].username;
-              const room = data.room;
-              console.log('socket:', socketUser);
-              console.log('socket user :', socket.request.user);
-              console.log('username :', username); // const socketId = socket.id
-
-              socket.emit('roomCreation', {
-                username: username,
-                room: room
-              });
-              socket.join(room, console.log(`${username} has joined ${room}`));
-              socket.emit('joiningEvent', `${username} has joined the room ${room}`);
-              socket.broadcast.to(room).emit('joiningEvent', `${username} has joined the room ${room}`); // console.log(socket.request.user);
-            } else if (!socket.request.user.logged_in) {}
-          });
-        });
       } // io.on('connection', function(socket) {
       //   console.log('A client has connected');
       //   console.log('the socket session object', socket.request.session);
