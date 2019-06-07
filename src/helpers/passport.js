@@ -69,29 +69,39 @@ export default function(passport) {
             passReqToCallback : true // allows us to pass back the entire request to the callback
         },
         function(req, email, password, done) { // callback with email and password from our form
-            connection.query("SELECT * FROM users WHERE email = ?",[email], function(err, results, fields){
+            connection.query("SELECT * FROM users WHERE email = ?",[email], function(err, results, fields, user){
                 if (err)
                     return done(err);
                 if (results.length === 0) {
-                    console.log('no user found');
-                    return done(null, false);
+                    // console.log('no user found');
+                    // res.send('no user found')
+                    return done(null, null, { message : 'no user found' });
                 } else {
                     let hashedPassword = results[0].password;
                     // if the user is found but the password is wrong
                     bcrypt.compare(password, hashedPassword, function(err, response){
-                        // console.log('hashedpassword :', hashedPassword)
-                        // console.log('password :', password)
-                        if(response == true){
+                        console.log('hashedpassword :', hashedPassword)
+                        console.log('password :', password)
+                        if(response){
                             // all is well, return successful user
                             console.log(results)
                             const user = results[0]
                             console.log('user :', user)
-
-                            return done(null, user);
+                            // res.send({status: 200, user: user})
+                            return done(null, user, { message : 'user identified'});
                         } else {
                                 console.log('wrong password')
-                                return done(null, false); // create the loginMessage and save it to session as flashdata
+                                // res.send({status: 403, errors: 'wrong password'})
+                                return done(null, null, { message: 'incorrect password'}); // create the loginMessage and save it to session as flashdata
                             }
+                        // if(err) {
+                        //     console.log(err);
+                        //     return done(null, false, {err: err});
+                        // } else if(response) {
+                        //     const user = results[0];
+                        //     console.log('identified user', user);
+                        //     return done(null, user);
+                        //     }
                         });
                     }
                 })

@@ -87,10 +87,15 @@ function onAuthorizeSuccess(data, accept){
 }
 
 function onAuthorizeFail(data, message, error, accept){
-  // error indicates whether the fail is due to an error or just a unauthorized client
-  if(error)  throw new Error(message);
-  // send the (not-fatal) error-message to the client and deny the connection
 
+  // error indicates whether the fail is due to an error or just a unauthorized client
+  if(error)  {
+    // console.log(error)
+    throw new Error(message);
+  }
+  // send the (not-fatal) error-message to the client and deny the connection
+  console.log(error)
+  console.log("unauthorized: you're not logged in");
   return accept(new Error(message));
 }
 
@@ -119,32 +124,33 @@ app.get('/', verifiedAuth, (req, res) => {
 })
 
 
-io.on('connection', function(socket) {
+// io.on('connection', function(socket, message) {
 
 
-  socket.on('join', (data) => {
-    if (socket.request.user && socket.request.user.logged_in) {
+//   socket.on('join', (data) => {
+//     if (socket.request.user && socket.request.user.logged_in) {
 
-      const socketUser = socket.request.user
-      // console.log('username: ', socketUser.username);
-      // console.log('room: ', data.room)
-      // console.log('id: ', socket.id)
-      const username = socketUser[0].username;
-      const room = data.room;
-      console.log('socket user :', socket.request.user)
-      console.log('username :', username)
-      // const socketId = socket.id
-      socket.emit('roomCreation', {
-      username: username,
-      room: room,
-      });
-      socket.join(room, console.log(`${username} has joined ${room}`));
-      socket.emit('joiningEvent', `${username} has joined the room ${room}`);
-      socket.broadcast.to(room).emit('joiningEvent', `${username} has joined the room ${room}`);// console.log(socket.request.user);
-    } else {
-      console.log('user not autorized to create room')
-    }
-});
+//       const socketUser = socket.request.user
+//       // console.log('username: ', socketUser.username);
+//       // console.log('room: ', data.room)
+//       // console.log('id: ', socket.id)
+//       const username = socketUser[0].username;
+//       const room = data.room;
+//       console.log('socket:', socketUser)
+//       console.log('socket user :', socket.request.user)
+//       console.log('username :', username)
+//       // const socketId = socket.id
+//       socket.emit('roomCreation', {
+//       username: username,
+//       room: room,
+//       });
+//       socket.join(room, console.log(`${username} has joined ${room}`));
+//       socket.emit('joiningEvent', `${username} has joined the room ${room}`);
+//       socket.broadcast.to(room).emit('joiningEvent', `${username} has joined the room ${room}`);// console.log(socket.request.user);
+//     } else if(!socket.request.user.logged_in){
+
+//     }
+// });
 // // error handler
 // app.use(function(err, req, res, next) {
 //   // set locals, only providing error in development
@@ -178,5 +184,5 @@ io.on('connection', function(socket) {
 // //     socket.join(room, console.log(`${user} has joined ${room}`));
 // //     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
 // //     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
-    })
+    // })
 
