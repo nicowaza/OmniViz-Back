@@ -24,7 +24,7 @@ connection.connect(function(err) {
     console.log("Table users created")
   });
 
-  // connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.courses (coursesID INT NOT NULL UNIQUE AUTO_INCREMENT,   ")
+//   connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.courses (coursesID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID   ")
 });
 
 module.exports = connection

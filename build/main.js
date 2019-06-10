@@ -116,7 +116,7 @@ connection.connect(function (err) {
   connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, email VARCHAR(250) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255), lastname VARCHAR(255), avatarUrl VARCHAR(500), university VARCHAR(255), password VARCHAR(40) NOT NULL, role VARCHAR(30))", function (err, result) {
     if (err) throw err;
     console.log("Table users created");
-  }); // connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.courses (coursesID INT NOT NULL UNIQUE AUTO_INCREMENT,   ")
+  }); //   connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.courses (coursesID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID   ")
 });
 module.exports = connection;
 
@@ -404,7 +404,10 @@ app.use(passport.session()); // io.use((socket,next) => {
 
 const userRouter = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js").default(io, passport, app);
 
+const roomRouter = __webpack_require__(/*! ./routes/rooms */ "./src/routes/rooms.js").default(io, passport, app);
+
 app.use('/users', userRouter);
+app.use('/rooms', roomRouter);
 app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (req, res) => {
   res.send('hello world');
   console.log('get req session user', req.session.passport);
@@ -498,6 +501,47 @@ io.on('connection', function (socket, message) {
 
 /***/ }),
 
+/***/ "./src/routes/rooms.js":
+/*!*****************************!*\
+  !*** ./src/routes/rooms.js ***!
+  \*****************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+const express = __webpack_require__(/*! express */ "express");
+
+const connection = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
+
+const verifiedAuth = __webpack_require__(/*! ../helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
+
+const mysql = __webpack_require__(/*! mysql */ "mysql");
+
+const roomRouter = express.Router();
+/* harmony default export */ __webpack_exports__["default"] = (function (app, passport, io) {
+  roomRouter.get('/', (req, res) => {
+    connection.query('SELECT * FROM rooms ', (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.send({
+          err
+        });
+      } else {
+        console.log(results);
+        res.status(200).send({
+          status: true,
+          content: results
+        });
+      }
+    });
+    ;
+  });
+  return roomRouter;
+});
+
+/***/ }),
+
 /***/ "./src/routes/users.js":
 /*!*****************************!*\
   !*** ./src/routes/users.js ***!
@@ -507,11 +551,10 @@ io.on('connection', function (socket, message) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! express */ "express");
-/* harmony import */ var express__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(express__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
+/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
+/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
+const express = __webpack_require__(/*! express */ "express");
 
 
 
@@ -529,9 +572,9 @@ const passport = __webpack_require__(/*! passport */ "passport");
 __webpack_require__(/*! ../helpers/passport */ "./src/helpers/passport.js").default(passport); // import { io } from '../index';
 
 
-const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
+const userRouter = express.Router();
 /* harmony default export */ __webpack_exports__["default"] = (function (app, passport, io) {
-  userRouter.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_2__["verifiedAuth"], (req, res, next) => {
+  userRouter.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_1__["verifiedAuth"], (req, res, next) => {
     //les data du user authentifié peuvent être retrouvées dans l'objet req.user
     const user = req.user[0];
     const userdata = {
@@ -604,7 +647,7 @@ const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
       const saltRounds = 10;
       bcrypt.hash(password, saltRounds, function (err, hash) {
         let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
-        _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default.a.query(query, (err, results, fields) => {
+        _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query(query, (err, results, fields) => {
           if (errors) {
             console.log(errors);
             res.send({
@@ -646,22 +689,22 @@ const userRouter = express__WEBPACK_IMPORTED_MODULE_0___default.a.Router();
             isAuthenticated: req.isAuthenticated(),
             message: message.message
           });
-        }); // else {
-        //   req.login(user, (err) => {
-        //     if(err) {
-        //       console.log(err)
-        //     }
-        //     // console.log('req login :', user)
-        //     // console.log('login req.session', req.session)
-        //     // console.log('req.user :' ,req.user)
-        //     console.log('authenticated :', req.isAuthenticated())
-        //     //renvoie isAuthenticated à true dans le front
-        //     res.send({errors: err, isAuthenticated: req.isAuthenticated()})
-        //   })
-        // console.log(io);
-
-        const userSockets = {};
-      } // io.on('connection', function(socket) {
+        });
+      } // else {
+      //   req.login(user, (err) => {
+      //     if(err) {
+      //       console.log(err)
+      //     }
+      //     // console.log('req login :', user)
+      //     // console.log('login req.session', req.session)
+      //     // console.log('req.user :' ,req.user)
+      //     console.log('authenticated :', req.isAuthenticated())
+      //     //renvoie isAuthenticated à true dans le front
+      //     res.send({errors: err, isAuthenticated: req.isAuthenticated()})
+      //   })
+      // console.log(io);
+      // const userSockets = {}
+      // io.on('connection', function(socket) {
       //   console.log('A client has connected');
       //   console.log('the socket session object', socket.request.session);
       //   console.log('the actual serialized user from passport', socket.request.session.passport.user);

@@ -112,7 +112,9 @@ app.use(passport.session());
 
 // app.use('/realtime', realtimeRouter);
 const userRouter = require('./routes/users').default(io, passport, app);
+const roomRouter = require('./routes/rooms').default(io, passport, app);
 app.use('/users', userRouter);
+app.use('/rooms', roomRouter)
 
 
 app.get('/', verifiedAuth, (req, res) => {

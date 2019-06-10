@@ -1,4 +1,4 @@
-import express from 'express';
+const express = require('express')
 import connection from '../helpers/db.connexion';
 import { verifiedAuth } from '../helpers/verifyAuth';
 const mysql = require('mysql');
@@ -125,7 +125,7 @@ export default function(app, passport, io) {
           console.log('user :', user)
           res.send({user: user, isAuthenticated: req.isAuthenticated(), message: message.message})
         })
-
+  }
       // else {
       //   req.login(user, (err) => {
       //     if(err) {
@@ -139,8 +139,8 @@ export default function(app, passport, io) {
       //     res.send({errors: err, isAuthenticated: req.isAuthenticated()})
       //   })
         // console.log(io);
-        const userSockets = {}
-      }
+        // const userSockets = {}
+
         // io.on('connection', function(socket) {
         //   console.log('A client has connected');
         //   console.log('the socket session object', socket.request.session);
