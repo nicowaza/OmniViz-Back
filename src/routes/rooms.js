@@ -16,7 +16,9 @@ export default function(app, passport, io) {
         })
       }else {
         console.log(results)
-        res.status(200).send({status: true, content: results});
+        // const result = JSON.stringify(results);
+        // console.log(result)
+        res.status(200).send({status: true, results: results});
       }
     });;
   });

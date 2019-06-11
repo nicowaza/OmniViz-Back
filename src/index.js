@@ -126,9 +126,6 @@ app.get('/', verifiedAuth, (req, res) => {
 })
 
 io.on('connection', function(socket, message) {
-  console.log('A client has connected');
-  console.log('socket.request.user', socket.request.user)
-
   socket.on('join', (data) => {
     if (socket.request.user && socket.request.user.logged_in) {
 
@@ -137,6 +134,7 @@ io.on('connection', function(socket, message) {
       // console.log('room: ', data.room)
       // console.log('id: ', socket.id)
       const username = socketUser[0].username;
+      const user_id = socketUser[0].userID
       const room = data.room;
       console.log('socket:', socketUser)
       console.log('socket user :', socket.request.user)
@@ -147,8 +145,23 @@ io.on('connection', function(socket, message) {
       room: room,
       });
       socket.join(room, console.log(`${username} has joined ${room}`));
-      socket.emit('joiningEvent', `${username} has joined the room ${room}`);
+      // socket.emit('joiningEvent', {
+      //   message: `${username} has joined the room ${room}`
+      // });
       socket.broadcast.to(room).emit('joiningEvent', `${username} has joined the room ${room}`);// console.log(socket.request.user);
+
+      socket.on('greenPing', (data) => {
+        const datagreen = data;
+        console.log(datagreen);
+        socket.broadcast.to(room).emit('greenTag', {
+          greenTag: datagreen.tag,
+          username: username,
+          user_id: user_id,
+          room: room,
+          time: datagreen.timestamp,
+          },
+        )
+      })
       } else {
         //Ne marche pas...trouver la solution
         console.log('unauthorized')
