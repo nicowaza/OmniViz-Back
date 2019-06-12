@@ -80,11 +80,8 @@ export default function(passport) {
                     let hashedPassword = results[0].password;
                     // if the user is found but the password is wrong
                     bcrypt.compare(password, hashedPassword, function(err, response){
-                        console.log('hashedpassword :', hashedPassword)
-                        console.log('password :', password)
                         if(response){
                             // all is well, return successful user
-                            console.log(results)
                             const user = results[0]
                             console.log('user :', user)
                             // res.send({status: 200, user: user})

@@ -122,7 +122,8 @@ export default function(app, passport, io) {
           if(err) {
             console.log(err)
           }
-          console.log('user :', user)
+          // console.log('user :', user)
+          console.log(req.isAuthenticated())
           res.send({user: user, isAuthenticated: req.isAuthenticated(), message: message.message})
         })
   }
