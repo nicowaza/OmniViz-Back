@@ -125,7 +125,7 @@ app.get('/', verifiedAuth, (req, res) => {
   // })(req,res,next);
 })
 
-io.on('connection', function(socket, message) {
+io.of('/socket').on('connection', function(socket, message) {
   socket.on('join', (data) => {
     if (socket.request.user && socket.request.user.logged_in) {
 
@@ -151,62 +151,21 @@ io.on('connection', function(socket, message) {
 
       socket.broadcast.to(room).emit('joiningEvent', ({ message: `${username} has joined the room ${room}`}));// console.log(socket.request.user);
 
-      socket.on('greenPing', (data) => {
-        const datagreen = data;
-        console.log(datagreen);
-        socket.broadcast.to(room).emit('greenTag', {
-          greenTag: datagreen.tag,
+      socket.on('tag', (data) => {
+        // const datagreen = data;
+        // console.log(datagreen);
+        socket.broadcast.to(room).emit('event', {
+          color: data.tag,
           username: username,
           user_id: user_id,
           room: room,
-          time: datagreen.timestamp,
+          time: data.timestamp,
           },
         )
       })
-      socket.on('yellowPing', (data) => {
-        const datayellow = data;
-        console.log(datayellow);
-        socket.broadcast.to(room).emit('yellowTag', {
-          yellowTag: datayellow.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datayellow.timestamp,
-          },
-        )
-      })
-      socket.on('redPing', (data) => {
-        const datared = data;
-        console.log(datared);
-        socket.broadcast.to(room).emit('redTag', {
-          redTag: datared.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datared.timestamp,
-          },
-        )
-      })
-      socket.on('bluePing', (data) => {
-        const datablue = data;
-        console.log(datablue);
-        socket.broadcast.to(room).emit('blueTag', {
-          blueTag: datablue.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datablue.timestamp,
-          },
-        )
-      })
+      //
 
-      socket.on('leave', (data) => {
-        const username = socketUser[0].username;
-        const user_id = socketUser[0].userID
-        const room = data.room;
-        socket.leave(room, console.log(`${username} has left ${room}`));
-        socket.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
-      })
+
 
       // socket.on('leave', function () {
       //   console.log(`${username} has disconnected`)
@@ -217,8 +176,14 @@ io.on('connection', function(socket, message) {
         console.log('unauthorized')
     }
   });
-
-})
+  socket.on('unsubscribe', (data) => {
+    const username = socketUser[0].username;
+    const user_id = socketUser[0].userID
+    const room = data.room;
+    socket.leave(room, console.log(`${username} has left ${room}`));
+    socket.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
+  })
+});
 // io.on('connection', function(socket, message) {
 
 
