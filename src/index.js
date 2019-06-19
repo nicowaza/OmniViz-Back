@@ -8,6 +8,8 @@ const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
 import { verifiedAuth } from './helpers/verifyAuth';
 import connection from './helpers/db.connexion';
+// const { onAuthorizeSuccess, onAuthorizeFail } = require('./helpers/passportAuthorize');
+// import { onAuthorizeSuccess, onAuthorizeFail} from './helpers/passportAuthorize';
 
 //authentication packages
 const session = require('express-session');
@@ -25,7 +27,8 @@ const server = app.listen(port, () => console.log(`server is running on port ${p
 
 
 // Socket Setup
-const io = socket(server);
+// const io = socket(server);
+require('./socket/sockets')(server);
 
 //static files
 app.use(express.static('../public'));
@@ -65,32 +68,41 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 1000 * 60 * 60 * 2
+    maxAge: 1000 * 60 * 60 * 1
   }
   // cookie: { secure: true }
 });
 app.use(sessionMiddleware);
 
+
+//passport session
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+//passportSocketIo mapp la session express avec une session socket.io => permet d'authoriser les échanges d'events qu'une fois l'utilisateur loggé. Permet de récupérer l'utilisateur serialisé par passport
 io.use(passportSocketIo.authorize({
   cookieParser: cookieParser,
   key: 'sid',
   secret: 'thedudeabides',
   store: sessionStore,
+  passport: passport,
   success: onAuthorizeSuccess,
   fail: onAuthorizeFail,
 }));
 
-function onAuthorizeSuccess(data, accept){
-  console.log('successful connection to socket.io');
-  // console.log(data)
-  accept();
-}
+
+ function onAuthorizeSuccess(data, accept){
+    console.log('successful connection to socket.io');
+    // console.log(data)
+    accept();
+  }
 
 function onAuthorizeFail(data, message, error, accept){
 
   // error indicates whether the fail is due to an error or just a unauthorized client
   if(error)  {
-    // console.log(error)
+    console.log(error)
     throw new Error(message);
   }
   // send the (not-fatal) error-message to the client and deny the connection
@@ -98,12 +110,6 @@ function onAuthorizeFail(data, message, error, accept){
   console.log("unauthorized: you're not logged in");
   return accept(new Error(message));
 }
-
-
-//passport session
-app.use(passport.initialize());
-app.use(passport.session());
-
 
 
 // io.use((socket,next) => {
@@ -125,101 +131,101 @@ app.get('/', verifiedAuth, (req, res) => {
   // })(req,res,next);
 })
 
-io.on('connection', function(socket, message) {
-  socket.on('join', (data) => {
-    if (socket.request.user && socket.request.user.logged_in) {
-
-      const socketUser = socket.request.user
-      // console.log('username: ', socketUser.username);
-      // console.log('room: ', data.room)
-      // console.log('id: ', socket.id)
-      const username = socketUser[0].username;
-      const user_id = socketUser[0].userID
-      const room = data.room;
-      console.log('socket:', socketUser)
-      console.log('socket user :', socket.request.user)
-      console.log('username :', username)
-      // const socketId = socket.id
-      socket.emit('roomCreation', {
-      username: username,
-      room: room,
-      });
-      socket.join(room, console.log(`${username} has joined ${room}`));
-      // socket.emit('joiningEvent', {
-      //   message: `${username} has joined the room ${room}`
-      // });
-
-      socket.broadcast.to(room).emit('joiningEvent', ({ message: `${username} has joined the room ${room}`}));// console.log(socket.request.user);
-
-      socket.on('greenPing', (data) => {
-        const datagreen = data;
-        console.log(datagreen);
-        socket.broadcast.to(room).emit('greenTag', {
-          greenTag: datagreen.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datagreen.timestamp,
-          },
-        )
-      })
-      socket.on('yellowPing', (data) => {
-        const datayellow = data;
-        console.log(datayellow);
-        socket.broadcast.to(room).emit('yellowTag', {
-          yellowTag: datayellow.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datayellow.timestamp,
-          },
-        )
-      })
-      socket.on('redPing', (data) => {
-        const datared = data;
-        console.log(datared);
-        socket.broadcast.to(room).emit('redTag', {
-          redTag: datared.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datared.timestamp,
-          },
-        )
-      })
-      socket.on('bluePing', (data) => {
-        const datablue = data;
-        console.log(datablue);
-        socket.broadcast.to(room).emit('blueTag', {
-          blueTag: datablue.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datablue.timestamp,
-          },
-        )
-      })
-
-      socket.on('leave', (data) => {
-        const username = socketUser[0].username;
-        const user_id = socketUser[0].userID
-        const room = data.room;
-        socket.leave(room, console.log(`${username} has left ${room}`));
-        socket.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
-      })
-
-      // socket.on('leave', function () {
-      //   console.log(`${username} has disconnected`)
-      //       io.emit('user disconnected');
-          // });
-      } else {
-        //Ne marche pas...trouver la solution
-        console.log('unauthorized')
-    }
-  });
-
-})
 // io.on('connection', function(socket, message) {
+//   console.log('connection')
+//   if (socket.request.user && socket.request.user.logged_in) {
+//     socket.on('join', (data) => {
+//       const socketUser = socket.request.user
+//       const { username, userID: user_id } = socketUser[0];
+//       const room = data.room;
+//       console.log('room :', room)
+//       console.log('socket:', socketUser)
+//       console.log('socket user :', socket.request.user)
+//       console.log('username :', username);
+
+//       socket.emit('roomCreation', {
+//       username: username,
+//       room: room,
+//       });
+
+//       socket.join(room, console.log(`${username} has joined ${room}`));
+
+//       socket.emit('joiningEvent', {
+//         message: `${username} has joined the room ${room}`
+//       });
+
+//       socket.broadcast.to(room).emit('joiningEvent', ({ message: `${username} has joined the room ${room}`}));// console.log(socket.request.user);
+
+//       socket.on('greenPing', (data) => {
+//         const datagreen = data;
+//         console.log(datagreen);
+//         socket.broadcast.to(room).emit('greenTag', {
+//           greenTag: datagreen.tag,
+//           username: username,
+//           user_id: user_id,
+//           room: room,
+//           time: datagreen.timestamp,
+//           },
+//         )
+//       });
+
+//       socket.on('yellowPing', (data) => {
+//         const datayellow = data;
+//         console.log(datayellow);
+//         socket.broadcast.to(room).emit('yellowTag', {
+//           yellowTag: datayellow.tag,
+//           username: username,
+//           user_id: user_id,
+//           room: room,
+//           time: datayellow.timestamp,
+//           },
+//         )
+//       });
+
+//       socket.on('redPing', (data) => {
+//         const datared = data;
+//         console.log(datared);
+//         socket.broadcast.to(room).emit('redTag', {
+//           redTag: datared.tag,
+//           username: username,
+//           user_id: user_id,
+//           room: room,
+//           time: datared.timestamp,
+//           },
+//         )
+//       });
+
+//       socket.on('bluePing', (data) => {
+//         const datablue = data;
+//         console.log(datablue);
+//         socket.broadcast.to(room).emit('blueTag', {
+//           blueTag: datablue.tag,
+//           username: username,
+//           user_id: user_id,
+//           room: room,
+//           time: datablue.timestamp,
+//           },
+//         )
+//       });
+
+//       socket.on('leave', (data) => {
+//         const username = socketUser[0].username;
+//         const user_id = socketUser[0].userID
+//         const room = data.room;
+//         socket.leave(room, console.log(`${username} has left ${room}`));
+//         socket.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
+//       })
+//     });
+//     // socket.on('leave', function () {
+//     //   console.log(`${username} has disconnected`)
+//     //       io.emit('user disconnected');
+//           // });
+//     } else {
+//         //Ne marche pas...trouver la solution
+//         console.log('unauthorized')
+//   }
+// })
+// // io.on('connection', function(socket, message) {
 
 
 //   socket.on('join', (data) => {
@@ -281,3 +287,4 @@ io.on('connection', function(socket, message) {
 // //     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
     // })
 
+module.export = server;

@@ -88,6 +88,41 @@ module.exports =
 /************************************************************************/
 /******/ ({
 
+/***/ "./node_modules/webpack/buildin/harmony-module.js":
+/*!*******************************************!*\
+  !*** (webpack)/buildin/harmony-module.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = function(originalModule) {
+	if (!originalModule.webpackPolyfill) {
+		var module = Object.create(originalModule);
+		// module.parent = undefined by default
+		if (!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		Object.defineProperty(module, "exports", {
+			enumerable: true
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+
+/***/ }),
+
 /***/ "./src/helpers/db.connexion.js":
 /*!*************************************!*\
   !*** ./src/helpers/db.connexion.js ***!
@@ -251,6 +286,68 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
 /***/ }),
 
+/***/ "./src/helpers/passportAuthorize.js":
+/*!******************************************!*\
+  !*** ./src/helpers/passportAuthorize.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+// const passportSocketIo = require("passport.socketio");
+// const verifyIoConnection = function () {
+//   io.use(passportSocketIo.authorize({
+//     cookieParser: cookieParser,
+//     key: 'sid',
+//     secret: 'thedudeabides',
+//     store: sessionStore,
+//     passport: passport,
+//     success: onAuthorizeSuccess,
+//     fail: onAuthorizeFail,
+//   }));
+//   function onAuthorizeSuccess(data, accept){
+//     console.log('successful connection to socket.io');
+//     // console.log(data)
+//     accept();
+//   }
+//   function onAuthorizeFail(data, message, error, accept){
+//     // error indicates whether the fail is due to an error or just a unauthorized client
+//     if(error)  {
+//       console.log(error)
+//       throw new Error(message);
+//     }
+//     // send the (not-fatal) error-message to the client and deny the connection
+//     console.log(error)
+//     console.log("unauthorized: you're not logged in");
+//     return accept(new Error(message));
+//   }
+// }
+// module.exports = verifyIoConnection;
+const onAuthorizeSuccess = (data, accept) => {
+  console.log('successful connection to socket.io'); // console.log(data)
+
+  accept();
+};
+
+const onAuthorizeFail = (data, message, error, accept) => {
+  // error indicates whether the fail is due to an error or just a unauthorized client
+  if (error) {
+    // console.log(error)
+    throw new Error(message);
+  } // send the (not-fatal) error-message to the client and deny the connection
+
+
+  console.log(error);
+  console.log("unauthorized: you're not logged in");
+  return accept(new Error(message));
+};
+
+module.exports = {
+  onAuthorizeSuccess,
+  onAuthorizeFail
+};
+
+/***/ }),
+
 /***/ "./src/helpers/verifyAuth.js":
 /*!***********************************!*\
   !*** ./src/helpers/verifyAuth.js ***!
@@ -284,7 +381,7 @@ const verifiedAuth = function (req, res, next) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
+/* WEBPACK VAR INJECTION */(function(module) {/* harmony import */ var _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
 /* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./helpers/db.connexion */ "./src/helpers/db.connexion.js");
 /* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_1__);
 const express = __webpack_require__(/*! express */ "express");
@@ -304,7 +401,9 @@ const expressValidator = __webpack_require__(/*! express-validator */ "express-v
 const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
 
- //authentication packages
+ // const { onAuthorizeSuccess, onAuthorizeFail } = require('./helpers/passportAuthorize');
+// import { onAuthorizeSuccess, onAuthorizeFail} from './helpers/passportAuthorize';
+//authentication packages
 
 const session = __webpack_require__(/*! express-session */ "express-session");
 
@@ -319,8 +418,10 @@ __webpack_require__(/*! ./helpers/passport */ "./src/helpers/passport.js").defau
 const app = express();
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`)); // Socket Setup
+// const io = socket(server);
 
-const io = socket(server); //static files
+__webpack_require__(/*! ./socket/sockets */ "./src/socket/sockets.js")(server); //static files
+
 
 app.use(express.static('../public')); //logger
 
@@ -358,16 +459,21 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 1000 * 60 * 60 * 2 // cookie: { secure: true }
+    maxAge: 1000 * 60 * 60 * 1 // cookie: { secure: true }
 
   }
 });
-app.use(sessionMiddleware);
+app.use(sessionMiddleware); //passport session
+
+app.use(passport.initialize());
+app.use(passport.session()); //passportSocketIo mapp la session express avec une session socket.io => permet d'authoriser les échanges d'events qu'une fois l'utilisateur loggé. Permet de récupérer l'utilisateur serialisé par passport
+
 io.use(passportSocketIo.authorize({
   cookieParser: cookieParser,
   key: 'sid',
   secret: 'thedudeabides',
   store: sessionStore,
+  passport: passport,
   success: onAuthorizeSuccess,
   fail: onAuthorizeFail
 }));
@@ -381,7 +487,7 @@ function onAuthorizeSuccess(data, accept) {
 function onAuthorizeFail(data, message, error, accept) {
   // error indicates whether the fail is due to an error or just a unauthorized client
   if (error) {
-    // console.log(error)
+    console.log(error);
     throw new Error(message);
   } // send the (not-fatal) error-message to the client and deny the connection
 
@@ -389,14 +495,11 @@ function onAuthorizeFail(data, message, error, accept) {
   console.log(error);
   console.log("unauthorized: you're not logged in");
   return accept(new Error(message));
-} //passport session
-
-
-app.use(passport.initialize());
-app.use(passport.session()); // io.use((socket,next) => {
+} // io.use((socket,next) => {
 //   sessionMiddleware(socket.request, socket.request.res || {}, next);
 // });
 // app.use('/realtime', realtimeRouter);
+
 
 const userRouter = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js").default(io, passport, app);
 
@@ -409,95 +512,92 @@ app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (
   console.log('get req session user', req.session.passport);
   console.log('username', req.username);
   console.log('authenticated :', req.isAuthenticated()); // })(req,res,next);
-});
-io.on('connection', function (socket, message) {
-  socket.on('join', data => {
-    if (socket.request.user && socket.request.user.logged_in) {
-      const socketUser = socket.request.user; // console.log('username: ', socketUser.username);
-      // console.log('room: ', data.room)
-      // console.log('id: ', socket.id)
-
-      const username = socketUser[0].username;
-      const user_id = socketUser[0].userID;
-      const room = data.room;
-      console.log('socket:', socketUser);
-      console.log('socket user :', socket.request.user);
-      console.log('username :', username); // const socketId = socket.id
-
-      socket.emit('roomCreation', {
-        username: username,
-        room: room
-      });
-      socket.join(room, console.log(`${username} has joined ${room}`)); // socket.emit('joiningEvent', {
-      //   message: `${username} has joined the room ${room}`
-      // });
-
-      socket.broadcast.to(room).emit('joiningEvent', {
-        message: `${username} has joined the room ${room}`
-      }); // console.log(socket.request.user);
-
-      socket.on('greenPing', data => {
-        const datagreen = data;
-        console.log(datagreen);
-        socket.broadcast.to(room).emit('greenTag', {
-          greenTag: datagreen.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datagreen.timestamp
-        });
-      });
-      socket.on('yellowPing', data => {
-        const datayellow = data;
-        console.log(datayellow);
-        socket.broadcast.to(room).emit('yellowTag', {
-          yellowTag: datayellow.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datayellow.timestamp
-        });
-      });
-      socket.on('redPing', data => {
-        const datared = data;
-        console.log(datared);
-        socket.broadcast.to(room).emit('redTag', {
-          redTag: datared.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datared.timestamp
-        });
-      });
-      socket.on('bluePing', data => {
-        const datablue = data;
-        console.log(datablue);
-        socket.broadcast.to(room).emit('blueTag', {
-          blueTag: datablue.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: datablue.timestamp
-        });
-      });
-      socket.on('leave', data => {
-        const username = socketUser[0].username;
-        const user_id = socketUser[0].userID;
-        const room = data.room;
-        socket.leave(room, console.log(`${username} has left ${room}`));
-        socket.to(room).emit('leavingEvent', {
-          message: `${username} has left the room ${room}`
-        });
-      }); // socket.on('leave', function () {
-      //   console.log(`${username} has disconnected`)
-      //       io.emit('user disconnected');
-      // });
-    } else {
-      //Ne marche pas...trouver la solution
-      console.log('unauthorized');
-    }
-  });
 }); // io.on('connection', function(socket, message) {
+//   console.log('connection')
+//   if (socket.request.user && socket.request.user.logged_in) {
+//     socket.on('join', (data) => {
+//       const socketUser = socket.request.user
+//       const { username, userID: user_id } = socketUser[0];
+//       const room = data.room;
+//       console.log('room :', room)
+//       console.log('socket:', socketUser)
+//       console.log('socket user :', socket.request.user)
+//       console.log('username :', username);
+//       socket.emit('roomCreation', {
+//       username: username,
+//       room: room,
+//       });
+//       socket.join(room, console.log(`${username} has joined ${room}`));
+//       socket.emit('joiningEvent', {
+//         message: `${username} has joined the room ${room}`
+//       });
+//       socket.broadcast.to(room).emit('joiningEvent', ({ message: `${username} has joined the room ${room}`}));// console.log(socket.request.user);
+//       socket.on('greenPing', (data) => {
+//         const datagreen = data;
+//         console.log(datagreen);
+//         socket.broadcast.to(room).emit('greenTag', {
+//           greenTag: datagreen.tag,
+//           username: username,
+//           user_id: user_id,
+//           room: room,
+//           time: datagreen.timestamp,
+//           },
+//         )
+//       });
+//       socket.on('yellowPing', (data) => {
+//         const datayellow = data;
+//         console.log(datayellow);
+//         socket.broadcast.to(room).emit('yellowTag', {
+//           yellowTag: datayellow.tag,
+//           username: username,
+//           user_id: user_id,
+//           room: room,
+//           time: datayellow.timestamp,
+//           },
+//         )
+//       });
+//       socket.on('redPing', (data) => {
+//         const datared = data;
+//         console.log(datared);
+//         socket.broadcast.to(room).emit('redTag', {
+//           redTag: datared.tag,
+//           username: username,
+//           user_id: user_id,
+//           room: room,
+//           time: datared.timestamp,
+//           },
+//         )
+//       });
+//       socket.on('bluePing', (data) => {
+//         const datablue = data;
+//         console.log(datablue);
+//         socket.broadcast.to(room).emit('blueTag', {
+//           blueTag: datablue.tag,
+//           username: username,
+//           user_id: user_id,
+//           room: room,
+//           time: datablue.timestamp,
+//           },
+//         )
+//       });
+//       socket.on('leave', (data) => {
+//         const username = socketUser[0].username;
+//         const user_id = socketUser[0].userID
+//         const room = data.room;
+//         socket.leave(room, console.log(`${username} has left ${room}`));
+//         socket.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
+//       })
+//     });
+//     // socket.on('leave', function () {
+//     //   console.log(`${username} has disconnected`)
+//     //       io.emit('user disconnected');
+//           // });
+//     } else {
+//         //Ne marche pas...trouver la solution
+//         console.log('unauthorized')
+//   }
+// })
+// // io.on('connection', function(socket, message) {
 //   socket.on('join', (data) => {
 //     if (socket.request.user && socket.request.user.logged_in) {
 //       const socketUser = socket.request.user
@@ -555,6 +655,9 @@ io.on('connection', function (socket, message) {
 // //     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
 // })
 
+module.export = server;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/harmony-module.js */ "./node_modules/webpack/buildin/harmony-module.js")(module)))
+
 /***/ }),
 
 /***/ "./src/routes/rooms.js":
@@ -577,6 +680,7 @@ const mysql = __webpack_require__(/*! mysql */ "mysql");
 const roomRouter = express.Router();
 /* harmony default export */ __webpack_exports__["default"] = (function (app, passport, io) {
   roomRouter.get('/', (req, res) => {
+    // console.log(io);
     connection.query('SELECT * FROM rooms ', (err, results, fields) => {
       if (err) {
         console.log(err);
@@ -593,7 +697,6 @@ const roomRouter = express.Router();
         });
       }
     });
-    ;
   });
   return roomRouter;
 });
@@ -617,6 +720,10 @@ const express = __webpack_require__(/*! express */ "express");
 
 
 
+const {
+  onAuthorizeSuccess
+} = __webpack_require__(/*! ../helpers/passportAuthorize */ "./src/helpers/passportAuthorize.js");
+
 const mysql = __webpack_require__(/*! mysql */ "mysql");
 
 const expressValidator = __webpack_require__(/*! express-validator */ "express-validator");
@@ -625,13 +732,19 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
 const socket = __webpack_require__(/*! socket.io */ "socket.io");
 
-const passport = __webpack_require__(/*! passport */ "passport");
+const passport = __webpack_require__(/*! passport */ "passport"); // const passportSocketIo = require("passport.socketio");
+
 
 __webpack_require__(/*! ../helpers/passport */ "./src/helpers/passport.js").default(passport); // import { io } from '../index';
 
 
 const userRouter = express.Router();
 /* harmony default export */ __webpack_exports__["default"] = (function (app, passport, io) {
+  // io.on('connection', function(socket, message) {
+  //   console.log('socket request user :', socket.request.user)
+  //   console.log(socket.request.user.logged_in)
+  //   console.log('user connected')
+  // })
   userRouter.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_1__["verifiedAuth"], (req, res, next) => {
     //les data du user authentifié peuvent être retrouvées dans l'objet req.user
     const user = req.user[0];
@@ -732,22 +845,21 @@ const userRouter = express.Router();
     passport.authenticate('local', (err, user, message) => {
       if (err) {
         res.send({
-          status: 403,
+          status: 401,
           errors: message
         });
       } else {
         req.login(user, err => {
           if (err) {
             console.log(err);
-          } // console.log('user :', user)
-
-
-          console.log(req.isAuthenticated());
-          res.send({
-            user: user,
-            isAuthenticated: req.isAuthenticated(),
-            message: message.message
-          });
+          } else {
+            console.log(req.isAuthenticated());
+            res.send({
+              user: user,
+              isAuthenticated: req.isAuthenticated(),
+              message: message.message
+            });
+          }
         });
       } // else {
       //   req.login(user, (err) => {
@@ -804,6 +916,114 @@ const userRouter = express.Router();
   });
   return userRouter;
 });
+
+/***/ }),
+
+/***/ "./src/socket/sockets.js":
+/*!*******************************!*\
+  !*** ./src/socket/sockets.js ***!
+  \*******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const {
+  server
+} = __webpack_require__(/*! ../index.js */ "./src/index.js");
+
+const socket = 'socket.io';
+
+module.exports.listen = function (server) {
+  const io = socket.listen(server);
+  io.on('connection', function (socket, message) {
+    console.log('connection');
+
+    if (socket.request.user && socket.request.user.logged_in) {
+      socket.on('join', data => {
+        const socketUser = socket.request.user;
+        const {
+          username,
+          userID: user_id
+        } = socketUser[0];
+        const room = data.room;
+        console.log('room :', room);
+        console.log('socket:', socketUser);
+        console.log('socket user :', socket.request.user);
+        console.log('username :', username);
+        socket.emit('roomCreation', {
+          username: username,
+          room: room
+        });
+        socket.join(room, console.log(`${username} has joined ${room}`));
+        socket.emit('joiningEvent', {
+          message: `${username} has joined the room ${room}`
+        });
+        socket.broadcast.to(room).emit('joiningEvent', {
+          message: `${username} has joined the room ${room}`
+        }); // console.log(socket.request.user);
+
+        socket.on('greenPing', data => {
+          const datagreen = data;
+          console.log(datagreen);
+          socket.broadcast.to(room).emit('greenTag', {
+            greenTag: datagreen.tag,
+            username: username,
+            user_id: user_id,
+            room: room,
+            time: datagreen.timestamp
+          });
+        });
+        socket.on('yellowPing', data => {
+          const datayellow = data;
+          console.log(datayellow);
+          socket.broadcast.to(room).emit('yellowTag', {
+            yellowTag: datayellow.tag,
+            username: username,
+            user_id: user_id,
+            room: room,
+            time: datayellow.timestamp
+          });
+        });
+        socket.on('redPing', data => {
+          const datared = data;
+          console.log(datared);
+          socket.broadcast.to(room).emit('redTag', {
+            redTag: datared.tag,
+            username: username,
+            user_id: user_id,
+            room: room,
+            time: datared.timestamp
+          });
+        });
+        socket.on('bluePing', data => {
+          const datablue = data;
+          console.log(datablue);
+          socket.broadcast.to(room).emit('blueTag', {
+            blueTag: datablue.tag,
+            username: username,
+            user_id: user_id,
+            room: room,
+            time: datablue.timestamp
+          });
+        });
+        socket.on('leave', data => {
+          const username = socketUser[0].username;
+          const user_id = socketUser[0].userID;
+          const room = data.room;
+          socket.leave(room, console.log(`${username} has left ${room}`));
+          socket.to(room).emit('leavingEvent', {
+            message: `${username} has left the room ${room}`
+          });
+        });
+      }); // socket.on('leave', function () {
+      //   console.log(`${username} has disconnected`)
+      //       io.emit('user disconnected');
+      // });
+    } else {
+      //Ne marche pas...trouver la solution
+      console.log('unauthorized');
+    }
+  }); // io.on('connection', function(socket, message) {
+};
 
 /***/ }),
 

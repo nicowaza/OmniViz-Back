@@ -8,6 +8,8 @@ const roomRouter = express.Router();
 export default function(app, passport, io) {
 
   roomRouter.get('/', (req, res) => {
+    // console.log(io);
+
     connection.query('SELECT * FROM rooms ', (err, results, fields) => {
       if (err) {
         console.log(err);
@@ -20,7 +22,8 @@ export default function(app, passport, io) {
         // console.log(result)
         res.status(200).send({status: true, results: results});
       }
-    });;
+    });
   });
+
   return roomRouter;
 }

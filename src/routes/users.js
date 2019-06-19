@@ -1,17 +1,26 @@
 const express = require('express')
 import connection from '../helpers/db.connexion';
 import { verifiedAuth } from '../helpers/verifyAuth';
+const { onAuthorizeSuccess } = require('../helpers/passportAuthorize');
 const mysql = require('mysql');
 const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
 const socket = require ('socket.io');
 const passport = require('passport');
+// const passportSocketIo = require("passport.socketio");
 require('../helpers/passport').default(passport);
 // import { io } from '../index';
 
 const userRouter = express.Router();
 
 export default function(app, passport, io) {
+
+  // io.on('connection', function(socket, message) {
+  //   console.log('socket request user :', socket.request.user)
+  //   console.log(socket.request.user.logged_in)
+  //   console.log('user connected')
+  // })
+
   userRouter.get('/', verifiedAuth, (req, res, next) => {
     //les data du user authentifié peuvent être retrouvées dans l'objet req.user
     const user = req.user[0];
@@ -113,18 +122,18 @@ export default function(app, passport, io) {
   });
 
   userRouter.post('/login', (req, res, next) => {
-    passport.authenticate('local',  (err, user, message) => {
+    passport.authenticate('local', (err, user, message) => {
       if(err){
-        res.send({status: 403, errors: message})
+        res.send({status: 401, errors: message})
       }
       else {
-        req.login(user, (err) => {
+        req.login(user,(err) => {
           if(err) {
             console.log(err)
+          } else {
+            console.log(req.isAuthenticated())
+            res.send({user: user, isAuthenticated: req.isAuthenticated(), message: message.message})
           }
-          // console.log('user :', user)
-          console.log(req.isAuthenticated())
-          res.send({user: user, isAuthenticated: req.isAuthenticated(), message: message.message})
         })
   }
       // else {
