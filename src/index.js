@@ -125,7 +125,10 @@ app.get('/', verifiedAuth, (req, res) => {
   // })(req,res,next);
 })
 
-io.of('/socket').on('connection', function(socket, message) {
+io.on('connection', function(socket, message) {
+  const socketUser = socket.request.user
+  const username = socketUser[0].username;
+  console.log(`${username} has opened a socket`)
   socket.on('join', (data) => {
     if (socket.request.user && socket.request.user.logged_in) {
 
@@ -154,6 +157,7 @@ io.of('/socket').on('connection', function(socket, message) {
       socket.on('tag', (data) => {
         // const datagreen = data;
         // console.log(datagreen);
+        // console.log(data.timestamp)
         socket.broadcast.to(room).emit('event', {
           color: data.tag,
           username: username,
@@ -163,20 +167,18 @@ io.of('/socket').on('connection', function(socket, message) {
           },
         )
       })
-      //
-
-
 
       // socket.on('leave', function () {
       //   console.log(`${username} has disconnected`)
       //       io.emit('user disconnected');
-          // });
+      //     });
       } else {
         //Ne marche pas...trouver la solution
         console.log('unauthorized')
     }
   });
-  socket.on('unsubscribe', (data) => {
+  socket.on('disconnect', (data) => {
+    console.log(data)
     const username = socketUser[0].username;
     const user_id = socketUser[0].userID
     const room = data.room;
