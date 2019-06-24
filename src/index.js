@@ -24,8 +24,6 @@ const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
 
 
-// Socket Setup
-const io = socket(server);
 
 //static files
 app.use(express.static('../public'));
@@ -46,6 +44,25 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(expressValidator());
+
+// Socket Setup
+const io = socket(server);
+
+io.on('connection', function(socket, message) {
+  const socketUser = socket.request.user
+  const username = socketUser[0].username;
+  console.log(`${username} has opened a socket`)
+
+  const roomRouter = require('./routes/rooms').default(io, passport, app, socket);
+  app.use('/rooms', roomRouter);
+
+  socket.on('disconnect', (data) => {
+    const username = socketUser[0].username;
+    const user_id = socketUser[0].userID
+    const room = data.room;
+    console.log(`${username} has disconnected`)
+  })
+});
 
 //mySQLStore
 const options = {
@@ -104,17 +121,14 @@ function onAuthorizeFail(data, message, error, accept){
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-
+const userRouter = require('./routes/users').default(io, passport, app);
+app.use('/users', userRouter);
 // io.use((socket,next) => {
 //   sessionMiddleware(socket.request, socket.request.res || {}, next);
 // });
 
 // app.use('/realtime', realtimeRouter);
-const userRouter = require('./routes/users').default(io, passport, app);
-const roomRouter = require('./routes/rooms').default(io, passport, app);
-app.use('/users', userRouter);
-app.use('/rooms', roomRouter)
+
 
 
 app.get('/', verifiedAuth, (req, res) => {
@@ -125,67 +139,64 @@ app.get('/', verifiedAuth, (req, res) => {
   // })(req,res,next);
 })
 
-io.on('connection', function(socket, message) {
-  const socketUser = socket.request.user
-  const username = socketUser[0].username;
-  console.log(`${username} has opened a socket`)
-  socket.on('join', (data) => {
-    if (socket.request.user && socket.request.user.logged_in) {
 
-      const socketUser = socket.request.user
-      // console.log('username: ', socketUser.username);
-      // console.log('room: ', data.room)
-      // console.log('id: ', socket.id)
-      const username = socketUser[0].username;
-      const user_id = socketUser[0].userID
-      const room = data.room;
-      console.log('socket:', socketUser)
-      console.log('socket user :', socket.request.user)
-      console.log('username :', username)
-      // const socketId = socket.id
-      socket.emit('roomCreation', {
-      username: username,
-      room: room,
-      });
-      socket.join(room, console.log(`${username} has joined ${room}`));
-      // socket.emit('joiningEvent', {
-      //   message: `${username} has joined the room ${room}`
-      // });
+  // socket.on('join', (data) => {
+  //   if (socket.request.user && socket.request.user.logged_in) {
 
-      socket.broadcast.to(room).emit('joiningEvent', ({ message: `${username} has joined the room ${room}`}));// console.log(socket.request.user);
+  //     const socketUser = socket.request.user
+  //     // console.log('username: ', socketUser.username);
+  //     // console.log('room: ', data.room)
+  //     // console.log('id: ', socket.id)
+  //     const username = socketUser[0].username;
+  //     const user_id = socketUser[0].userID
+  //     const room = data.room;
+  //     console.log('socket:', socketUser)
+  //     console.log('socket user :', socket.request.user)
+  //     console.log('username :', username)
+  //     // const socketId = socket.id
+  //     socket.emit('roomCreation', {
+  //     username: username,
+  //     room: room,
+  //     });
+  //     socket.join(room, console.log(`${username} has joined ${room}`));
+  //     // socket.emit('joiningEvent', {
+  //     //   message: `${username} has joined the room ${room}`
+  //     // });
 
-      socket.on('tag', (data) => {
-        // const datagreen = data;
-        // console.log(datagreen);
-        // console.log(data.timestamp)
-        socket.broadcast.to(room).emit('event', {
-          color: data.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: data.timestamp,
-          },
-        )
-      })
+  //     socket.broadcast.to(room).emit('joiningEvent', ({ message: `${username} has joined the room ${room}`}));// console.log(socket.request.user);
 
-      // socket.on('leave', function () {
-      //   console.log(`${username} has disconnected`)
-      //       io.emit('user disconnected');
-      //     });
-      } else {
-        //Ne marche pas...trouver la solution
-        console.log('unauthorized')
-    }
-  });
-  socket.on('disconnect', (data) => {
-    console.log(data)
-    const username = socketUser[0].username;
-    const user_id = socketUser[0].userID
-    const room = data.room;
-    socket.leave(room, console.log(`${username} has left ${room}`));
-    socket.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
-  })
-});
+  //     socket.on('tag', (data) => {
+  //       // const datagreen = data;
+  //       // console.log(datagreen);
+  //       // console.log(data.timestamp)
+  //       socket.broadcast.to(room).emit('event', {
+  //         color: data.tag,
+  //         username: username,
+  //         user_id: user_id,
+  //         room: room,
+  //         time: data.timestamp,
+  //         },
+  //       )
+  //     })
+
+  //     // socket.on('leave', function () {
+  //     //   console.log(`${username} has disconnected`)
+  //     //       io.emit('user disconnected');
+  //     //     });
+  //     } else {
+  //       //Ne marche pas...trouver la solution
+  //       console.log('unauthorized')
+  //   }
+  // });
+  // socket.on('disconnect', (data) => {
+  //   console.log(data)
+  //   const username = socketUser[0].username;
+  //   const user_id = socketUser[0].userID
+  //   const room = data.room;
+  //   socket.leave(room, console.log(`${username} has left ${room}`));
+  //   socket.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
+  // })
+
 // io.on('connection', function(socket, message) {
 
 

@@ -318,9 +318,7 @@ __webpack_require__(/*! ./helpers/passport */ "./src/helpers/passport.js").defau
 
 const app = express();
 const port = process.env.PORT || 5000;
-const server = app.listen(port, () => console.log(`server is running on port ${port}`)); // Socket Setup
-
-const io = socket(server); //static files
+const server = app.listen(port, () => console.log(`server is running on port ${port}`)); //static files
 
 app.use(express.static('../public')); //logger
 
@@ -340,7 +338,24 @@ app.use(bodyParser.urlencoded({
   extended: false
 }));
 app.use(cookieParser());
-app.use(expressValidator()); //mySQLStore
+app.use(expressValidator()); // Socket Setup
+
+const io = socket(server);
+io.on('connection', function (socket, message) {
+  const socketUser = socket.request.user;
+  const username = socketUser[0].username;
+  console.log(`${username} has opened a socket`);
+
+  const roomRouter = __webpack_require__(/*! ./routes/rooms */ "./src/routes/rooms.js").default(io, passport, app, socket);
+
+  app.use('/rooms', roomRouter);
+  socket.on('disconnect', data => {
+    const username = socketUser[0].username;
+    const user_id = socketUser[0].userID;
+    const room = data.room;
+    console.log(`${username} has disconnected`);
+  });
+}); //mySQLStore
 
 const options = {
   host: 'localhost',
@@ -393,83 +408,73 @@ function onAuthorizeFail(data, message, error, accept) {
 
 
 app.use(passport.initialize());
-app.use(passport.session()); // io.use((socket,next) => {
+app.use(passport.session());
+
+const userRouter = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js").default(io, passport, app);
+
+app.use('/users', userRouter); // io.use((socket,next) => {
 //   sessionMiddleware(socket.request, socket.request.res || {}, next);
 // });
 // app.use('/realtime', realtimeRouter);
 
-const userRouter = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js").default(io, passport, app);
-
-const roomRouter = __webpack_require__(/*! ./routes/rooms */ "./src/routes/rooms.js").default(io, passport, app);
-
-app.use('/users', userRouter);
-app.use('/rooms', roomRouter);
 app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (req, res) => {
   res.send('hello world');
   console.log('get req session user', req.session.passport);
   console.log('username', req.username);
   console.log('authenticated :', req.isAuthenticated()); // })(req,res,next);
-});
-io.on('connection', function (socket, message) {
-  const socketUser = socket.request.user;
-  const username = socketUser[0].username;
-  console.log(`${username} has opened a socket`);
-  socket.on('join', data => {
-    if (socket.request.user && socket.request.user.logged_in) {
-      const socketUser = socket.request.user; // console.log('username: ', socketUser.username);
-      // console.log('room: ', data.room)
-      // console.log('id: ', socket.id)
-
-      const username = socketUser[0].username;
-      const user_id = socketUser[0].userID;
-      const room = data.room;
-      console.log('socket:', socketUser);
-      console.log('socket user :', socket.request.user);
-      console.log('username :', username); // const socketId = socket.id
-
-      socket.emit('roomCreation', {
-        username: username,
-        room: room
-      });
-      socket.join(room, console.log(`${username} has joined ${room}`)); // socket.emit('joiningEvent', {
-      //   message: `${username} has joined the room ${room}`
-      // });
-
-      socket.broadcast.to(room).emit('joiningEvent', {
-        message: `${username} has joined the room ${room}`
-      }); // console.log(socket.request.user);
-
-      socket.on('tag', data => {
-        // const datagreen = data;
-        // console.log(datagreen);
-        // console.log(data.timestamp)
-        socket.broadcast.to(room).emit('event', {
-          color: data.tag,
-          username: username,
-          user_id: user_id,
-          room: room,
-          time: data.timestamp
-        });
-      }); // socket.on('leave', function () {
-      //   console.log(`${username} has disconnected`)
-      //       io.emit('user disconnected');
-      //     });
-    } else {
-      //Ne marche pas...trouver la solution
-      console.log('unauthorized');
-    }
-  });
-  socket.on('disconnect', data => {
-    console.log(data);
-    const username = socketUser[0].username;
-    const user_id = socketUser[0].userID;
-    const room = data.room;
-    socket.leave(room, console.log(`${username} has left ${room}`));
-    socket.to(room).emit('leavingEvent', {
-      message: `${username} has left the room ${room}`
-    });
-  });
-}); // io.on('connection', function(socket, message) {
+}); // socket.on('join', (data) => {
+//   if (socket.request.user && socket.request.user.logged_in) {
+//     const socketUser = socket.request.user
+//     // console.log('username: ', socketUser.username);
+//     // console.log('room: ', data.room)
+//     // console.log('id: ', socket.id)
+//     const username = socketUser[0].username;
+//     const user_id = socketUser[0].userID
+//     const room = data.room;
+//     console.log('socket:', socketUser)
+//     console.log('socket user :', socket.request.user)
+//     console.log('username :', username)
+//     // const socketId = socket.id
+//     socket.emit('roomCreation', {
+//     username: username,
+//     room: room,
+//     });
+//     socket.join(room, console.log(`${username} has joined ${room}`));
+//     // socket.emit('joiningEvent', {
+//     //   message: `${username} has joined the room ${room}`
+//     // });
+//     socket.broadcast.to(room).emit('joiningEvent', ({ message: `${username} has joined the room ${room}`}));// console.log(socket.request.user);
+//     socket.on('tag', (data) => {
+//       // const datagreen = data;
+//       // console.log(datagreen);
+//       // console.log(data.timestamp)
+//       socket.broadcast.to(room).emit('event', {
+//         color: data.tag,
+//         username: username,
+//         user_id: user_id,
+//         room: room,
+//         time: data.timestamp,
+//         },
+//       )
+//     })
+//     // socket.on('leave', function () {
+//     //   console.log(`${username} has disconnected`)
+//     //       io.emit('user disconnected');
+//     //     });
+//     } else {
+//       //Ne marche pas...trouver la solution
+//       console.log('unauthorized')
+//   }
+// });
+// socket.on('disconnect', (data) => {
+//   console.log(data)
+//   const username = socketUser[0].username;
+//   const user_id = socketUser[0].userID
+//   const room = data.room;
+//   socket.leave(room, console.log(`${username} has left ${room}`));
+//   socket.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
+// })
+// io.on('connection', function(socket, message) {
 //   socket.on('join', (data) => {
 //     if (socket.request.user && socket.request.user.logged_in) {
 //       const socketUser = socket.request.user
@@ -547,7 +552,62 @@ const verifiedAuth = __webpack_require__(/*! ../helpers/verifyAuth */ "./src/hel
 const mysql = __webpack_require__(/*! mysql */ "mysql");
 
 const roomRouter = express.Router();
-/* harmony default export */ __webpack_exports__["default"] = (function (app, passport, io) {
+/* harmony default export */ __webpack_exports__["default"] = (function (app, passport, io, socket) {
+  const socketUser = socket.request.user;
+  const username = socketUser[0].username;
+  socket.on('join', data => {
+    if (socket.request.user && socket.request.user.logged_in) {
+      const socketUser = socket.request.user; // console.log('username: ', socketUser.username);
+      // console.log('room: ', data.room)
+      // console.log('id: ', socket.id)
+
+      const username = socketUser[0].username;
+      const user_id = socketUser[0].userID;
+      const room = data.room;
+      console.log('socket:', socketUser);
+      console.log('socket user :', socket.request.user);
+      console.log('username :', username); // const socketId = socket.id
+
+      socket.emit('roomCreation', {
+        username: username,
+        room: room
+      });
+      socket.join(room, console.log(`${username} has joined ${room}`)); // socket.emit('joiningEvent', {
+      //   message: `${username} has joined the room ${room}`
+      // });
+
+      socket.broadcast.to(room).emit('joiningEvent', {
+        message: `${username} has joined the room ${room}`
+      }); // console.log(socket.request.user);
+
+      socket.on('tag', data => {
+        // const datagreen = data;
+        console.log(data); // console.log(data.timestamp)
+
+        socket.broadcast.to(room).emit('event', {
+          color: data.tag,
+          username: username,
+          user_id: user_id,
+          room: room,
+          time: data.timestamp
+        });
+      }); // socket.on('leave', function () {
+      //   console.log(`${username} has disconnected`)
+      //       io.emit('user disconnected');
+      //     });
+    } else {
+      //Ne marche pas...trouver la solution
+      console.log('unauthorized');
+    }
+  });
+  socket.on('leaveRoom', data => {
+    const username = data.username;
+    const room = data.room;
+    socket.leave(room, console.log(`${username} has left ${room}`));
+    socket.to(room).emit('leavingEvent', {
+      message: `${username} has left the room ${room}`
+    });
+  });
   roomRouter.get('/', (req, res) => {
     connection.query('SELECT * FROM rooms ', (err, results, fields) => {
       if (err) {
