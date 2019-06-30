@@ -422,22 +422,29 @@ io.on('connection', function (socket, message) {
 
       const username = socketUser[0].username;
       const user_id = socketUser[0].userID;
+      const user_role = socketUser[0].role;
       const room = data.room;
       console.log('socket:', socketUser);
       console.log('socket user :', socket.request.user);
       console.log('username :', username); // const socketId = socket.id
 
       socket.emit('roomCreation', {
-        username: username,
-        room: room
+        username,
+        room,
+        user_id,
+        user_role
       });
-      socket.join(room, console.log(`${username} has joined ${room}`)); // socket.emit('joiningEvent', {
+      socket.join(room, function (data) {
+        console.log(`${username} has joined ${room}`);
+        socket.broadcast.to(room).emit('joiningEvent', {
+          message: `${username} has joined ${room}`,
+          username,
+          user_id,
+          user_role
+        }); // console.log(socket.request.user);
+      }); // socket.emit('joiningEvent', {
       //   message: `${username} has joined the room ${room}`
       // });
-
-      socket.broadcast.to(room).emit('joiningEvent', {
-        message: `${username} has joined the room ${room}`
-      }); // console.log(socket.request.user);
 
       socket.on('tag', data => {
         // const datagreen = data;
@@ -450,24 +457,38 @@ io.on('connection', function (socket, message) {
           room: room,
           time: data.timestamp
         });
-      }); // socket.on('leave', function () {
-      //   console.log(`${username} has disconnected`)
-      //       io.emit('user disconnected');
-      //     });
+      }); // socket.on('disconnect', (data) => {
+      //   console.log(data)
+      //   const username = socketUser[0].username;
+      //   const user_id = socketUser[0].userID
+      //   const room = data.room;
+      //   console.log(room)
+      //   socket.leave(room, console.log(`${username} has left ${room}`));
+      //   socket.broadcast.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
+      // })
+
+      socket.on('leave', function (data) {
+        console.log(`${username} has left the ${room}`);
+        console.log(data); // io.emit('user disconnected');
+        // socket.broadcast.to(room).emit('leavingEvent',({
+        //   message: `${username} has left the room ${room}`,
+        //   data
+        // }));
+        // })
+
+        socket.leave(room, function (data) {
+          socket.broadcast.to(room).emit('leavingEvent', {
+            message: `${username} has left ${room}`,
+            username,
+            user_id,
+            user_role
+          });
+        });
+      });
     } else {
       //Ne marche pas...trouver la solution
       console.log('unauthorized');
     }
-  });
-  socket.on('disconnect', data => {
-    console.log(data);
-    const username = socketUser[0].username;
-    const user_id = socketUser[0].userID;
-    const room = data.room;
-    socket.leave(room, console.log(`${username} has left ${room}`));
-    socket.to(room).emit('leavingEvent', {
-      message: `${username} has left the room ${room}`
-    });
   });
 }); // io.on('connection', function(socket, message) {
 //   socket.on('join', (data) => {
