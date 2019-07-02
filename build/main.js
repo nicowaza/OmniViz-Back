@@ -486,6 +486,10 @@ io.on('connection', function (socket, message) {
           });
         });
       });
+      socket.on('closeRoom', function (data) {
+        console.log('classe fermée');
+        socket.broadcast.to(room).emit('closeRoom');
+      });
     } else {
       //Ne marche pas...trouver la solution
       console.log('unauthorized');
