@@ -153,11 +153,12 @@ io.on('connection', function(socket, message) {
 
       socket.join(room, function(data) {
         console.log(`${username} has joined ${room}`);
-        socket.broadcast.to(room).emit('joiningEvent', ({
+        io.in(room).emit('joiningEvent', ({
           message: `${username} has joined ${room}`,
           username,
           user_id,
           user_role,
+          room,
         }));// console.log(socket.request.user);
 
       });
