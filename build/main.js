@@ -414,6 +414,12 @@ io.on('connection', function (socket, message) {
   const socketUser = socket.request.user;
   const username = socketUser[0].username;
   console.log(`${username} has opened a socket`);
+  socket.on('createRoom', data => {
+    console.log(data);
+    socket.emit('roomCreation', function (data) {
+      console.log(data);
+    });
+  });
   socket.on('join', data => {
     if (socket.request.user && socket.request.user.logged_in) {
       const socketUser = socket.request.user; // console.log('username: ', socketUser.username);
@@ -423,18 +429,15 @@ io.on('connection', function (socket, message) {
       const username = socketUser[0].username;
       const user_id = socketUser[0].userID;
       const user_role = socketUser[0].role;
-      const room = data.room;
+      const room = data.room; // const createdBy = data.createdBy;
+      // console.log('join data :' , data)
+
       console.log('socket:', socketUser);
       console.log('socket user :', socket.request.user);
       console.log('username :', username); // const socketId = socket.id
 
-      socket.emit('roomCreation', {
-        username,
-        room,
-        user_id,
-        user_role
-      });
       socket.join(room, function (data) {
+        // console.log('join room data', data)
         console.log(`${username} has joined ${room}`);
         io.in(room).emit('joiningEvent', {
           message: `${username} has joined ${room}`,
@@ -451,6 +454,7 @@ io.on('connection', function (socket, message) {
         // const datagreen = data;
         // console.log(datagreen);
         // console.log(data.timestamp)
+        console.log(data);
         socket.broadcast.to(room).emit('event', {
           color: data.tag,
           username: username,
