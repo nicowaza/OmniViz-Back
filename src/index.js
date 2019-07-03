@@ -142,12 +142,16 @@ io.on('connection', function(socket, message) {
       // console.log('username: ', socketUser.username);
       // console.log('room: ', data.room)
       // console.log('id: ', socket.id)
+      console.log('join data', data)
       const username = socketUser[0].username;
       const user_id = socketUser[0].userID;
       const user_role = socketUser[0].role;
       const room = data.room;
-      // const createdBy = data.createdBy;
-      // console.log('join data :' , data)
+      const host = data.createdBy;
+      let hostSocketID;
+      console.log('premier hostSocketID', hostSocketID)
+
+      console.log('join data :' , data)
       console.log('socket:', socketUser)
       console.log('socket user :', socket.request.user)
       console.log('username :', username)
@@ -155,9 +159,11 @@ io.on('connection', function(socket, message) {
 
 
       socket.join(room, function(data) {
-        // console.log('join room data', data)
+        const socketID= socket.id
+        console.log('join room data', data)
         console.log(`${username} has joined ${room}`);
         io.in(room).emit('joiningEvent', ({
+          socketID,
           message: `${username} has joined ${room}`,
           username,
           user_id,
@@ -169,18 +175,25 @@ io.on('connection', function(socket, message) {
       // socket.emit('joiningEvent', {
       //   message: `${username} has joined the room ${room}`
       // });
+      socket.on('hostSocket', (data) => {
+        hostSocketID = data;
+        console.log('hostsocket', hostSocketID)
+      });
 
-      socket.on('tag', (data) => {
+      socket.on('tag', (data, hostSocketID) => {
+        console.log('hostSocketID', hostSocketID)
         // const datagreen = data;
         // console.log(datagreen);
         // console.log(data.timestamp)
         console.log(data)
+        console.log(socket.id)
         socket.broadcast.to(room).emit('event', {
           color: data.tag,
           username: username,
           user_id: user_id,
           room: room,
           time: data.timestamp,
+          hostSocketID: hostSocketID,
           },
         )
       })
