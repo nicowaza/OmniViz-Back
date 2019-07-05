@@ -362,7 +362,8 @@ const sessionMiddleware = session({
 
   }
 });
-app.use(sessionMiddleware);
+app.use(sessionMiddleware); //passportSocket.io lib : socket sessions
+
 io.use(passportSocketIo.authorize({
   cookieParser: cookieParser,
   key: 'sid',
@@ -373,8 +374,7 @@ io.use(passportSocketIo.authorize({
 }));
 
 function onAuthorizeSuccess(data, accept) {
-  console.log('successful connection to socket.io'); // console.log(data)
-
+  console.log('successful connection to socket.io');
   accept();
 }
 
@@ -389,14 +389,11 @@ function onAuthorizeFail(data, message, error, accept) {
   console.log(error);
   console.log("unauthorized: you're not logged in");
   return accept(new Error(message));
-} //passport session
+} // passport session
 
 
 app.use(passport.initialize());
-app.use(passport.session()); // io.use((socket,next) => {
-//   sessionMiddleware(socket.request, socket.request.res || {}, next);
-// });
-// app.use('/realtime', realtimeRouter);
+app.use(passport.session()); //routes
 
 const userRouter = __webpack_require__(/*! ./routes/users */ "./src/routes/users.js").default(io, passport, app);
 
@@ -408,8 +405,9 @@ app.get('/', _helpers_verifyAuth__WEBPACK_IMPORTED_MODULE_0__["verifiedAuth"], (
   res.send('hello world');
   console.log('get req session user', req.session.passport);
   console.log('username', req.username);
-  console.log('authenticated :', req.isAuthenticated()); // })(req,res,next);
-});
+  console.log('authenticated :', req.isAuthenticated());
+}); // sockets
+
 io.on('connection', function (socket, message) {
   const socketUser = socket.request.user;
   const username = socketUser[0].username;
@@ -422,22 +420,13 @@ io.on('connection', function (socket, message) {
   });
   socket.on('join', data => {
     if (socket.request.user && socket.request.user.logged_in) {
-      const socketUser = socket.request.user; // console.log('username: ', socketUser.username);
-      // console.log('room: ', data.room)
-      // console.log('id: ', socket.id)
-
+      const socketUser = socket.request.user;
       const username = socketUser[0].username;
       const user_id = socketUser[0].userID;
       const user_role = socketUser[0].role;
-      const room = data.room; // const createdBy = data.createdBy;
-      // console.log('join data :' , data)
-
+      const room = data.room;
       console.log('socket:', socketUser);
-      console.log('socket user :', socket.request.user);
-      console.log('username :', username); // const socketId = socket.id
-
       socket.join(room, function (data) {
-        // console.log('join room data', data)
         console.log(`${username} has joined ${room}`);
         io.in(room).emit('joiningEvent', {
           message: `${username} has joined ${room}`,
@@ -445,15 +434,9 @@ io.on('connection', function (socket, message) {
           user_id,
           user_role,
           room
-        }); // console.log(socket.request.user);
-      }); // socket.emit('joiningEvent', {
-      //   message: `${username} has joined the room ${room}`
-      // });
-
+        });
+      });
       socket.on('tag', data => {
-        // const datagreen = data;
-        // console.log(datagreen);
-        // console.log(data.timestamp)
         console.log(data);
         socket.broadcast.to(room).emit('event', {
           color: data.tag,
@@ -462,25 +445,18 @@ io.on('connection', function (socket, message) {
           room: room,
           time: data.timestamp
         });
-      }); // socket.on('disconnect', (data) => {
-      //   console.log(data)
-      //   const username = socketUser[0].username;
-      //   const user_id = socketUser[0].userID
-      //   const room = data.room;
-      //   console.log(room)
-      //   socket.leave(room, console.log(`${username} has left ${room}`));
-      //   socket.broadcast.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
-      // })
-
+      });
+      socket.on('disconnect', data => {
+        console.log('disconnection :', data); // const username = socketUser[0].username;
+        // const user_id = socketUser[0].userID
+        // const room = data.room;
+        // console.log(room)
+        // socket.leave(room, console.log(`${username} has left ${room}`));
+        // socket.broadcast.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
+      });
       socket.on('leave', function (data) {
         console.log(`${username} has left the ${room}`);
-        console.log(data); // io.emit('user disconnected');
-        // socket.broadcast.to(room).emit('leavingEvent',({
-        //   message: `${username} has left the room ${room}`,
-        //   data
-        // }));
-        // })
-
+        console.log(data);
         socket.leave(room, function (data) {
           socket.broadcast.to(room).emit('leavingEvent', {
             message: `${username} has left ${room}`,
@@ -491,7 +467,7 @@ io.on('connection', function (socket, message) {
         });
       });
       socket.on('closeRoom', function (data) {
-        console.log('classe fermée');
+        console.log('classe fermée :', data);
         socket.broadcast.to(room).emit('closeRoom');
       });
     } else {
@@ -499,63 +475,7 @@ io.on('connection', function (socket, message) {
       console.log('unauthorized');
     }
   });
-}); // io.on('connection', function(socket, message) {
-//   socket.on('join', (data) => {
-//     if (socket.request.user && socket.request.user.logged_in) {
-//       const socketUser = socket.request.user
-//       // console.log('username: ', socketUser.username);
-//       // console.log('room: ', data.room)
-//       // console.log('id: ', socket.id)
-//       const username = socketUser[0].username;
-//       const room = data.room;
-//       console.log('socket:', socketUser)
-//       console.log('socket user :', socket.request.user)
-//       console.log('username :', username)
-//       // const socketId = socket.id
-//       socket.emit('roomCreation', {
-//       username: username,
-//       room: room,
-//       });
-//       socket.join(room, console.log(`${username} has joined ${room}`));
-//       socket.emit('joiningEvent', `${username} has joined the room ${room}`);
-//       socket.broadcast.to(room).emit('joiningEvent', `${username} has joined the room ${room}`);// console.log(socket.request.user);
-//     } else if(!socket.request.user.logged_in){
-//     }
-// });
-// // error handler
-// app.use(function(err, req, res, next) {
-//   // set locals, only providing error in development
-//   res.locals.message = err.message;
-//   res.locals.error = req.app.get('env') === 'development' ? err : {};
-// })
-// // io.on('connection', function(socket){
-// //   socket.on('connect', function() {
-// //     io.emit('user connected');
-// //   });
-// //   socket.on('disconnect', function () {
-// //     io.emit('user disconnected');
-// //   });
-// //   console.log('socket connected', socket.id)
-// //   socket.emit('messageChannel', 'hello')
-// //   socket.on('pingServer', (data) => {
-// //     console.log(data)
-// //   })
-// //   socket.on('join', (data) => {
-// //     console.log('username: ', data.username);
-// //     console.log('room: ', data.room)
-// //     console.log('id: ', socket.id)
-// //     const user = data.username;
-// //     const room = data.room;
-// //     const userId = socket.id;
-// //     socket.emit('roomCreation', {
-// //     user: user,
-// //     room: room,
-// //     userId: userId
-// //     });
-// //     socket.join(room, console.log(`${user} has joined ${room}`));
-// //     socket.emit('joiningEvent', `${user} has joined the room ${room}`);
-// //     socket.broadcast.to(room).emit('joiningEvent', `${user} has joined the room ${room}`);
-// })
+});
 
 /***/ }),
 
@@ -586,9 +506,7 @@ const roomRouter = express.Router();
           err
         });
       } else {
-        console.log(results); // const result = JSON.stringify(results);
-        // console.log(result)
-
+        console.log(results);
         res.status(200).send({
           status: true,
           results: results
@@ -641,38 +559,13 @@ const userRouter = express.Router();
       username: user.username,
       email: user.email,
       role: user.role
-    }; // console.log(req.isAuthenticated())
-    // console.log('user data', userdata)
-    // console.log('the request session object', req.session);
-    // console.log('the serialized user from passport', req.user);
-    // console.log('the socket session object', socket.request.session);
-    // console.log('the actual serialized user from passport', socket.request.session.passport.user);
-    //renvoie le user + isAuthenticated à true dans le front
+    }; //renvoie le user + isAuthenticated à true dans le front
 
     res.send({
       status: 200,
       userdata: userdata,
       isAuthenticated: req.isAuthenticated()
-    }); // passport.authenticate('local', (errors, user) =>{
-    //   if(errors) {
-    //     throw errors
-    //   } else {
-    //     // console.log('username', req.user.username)
-    //     res.send(JSON.stringify(user.username))
-    //   }
-    // })(req,res,next);
-    // connection.query('SELECT * FROM users ', (err, results, fields) => {
-    //   if (err) {
-    //     console.log(err);
-    //     res.status(400).send({ status: false, message: 'User not created'})
-    //     // res.send({
-    //     //   err
-    //     // })
-    //   }else {
-    //     console.log(results)
-    //     res.status(200).send({status: true, content: results});
-    //   }
-    // });
+    });
   });
   userRouter.post('/register', (req, res) => {
     req.checkBody('username', 'Username field cannot be empty.').notEmpty();
@@ -741,8 +634,7 @@ const userRouter = express.Router();
         req.login(user, err => {
           if (err) {
             console.log(err);
-          } // console.log('user :', user)
-
+          }
 
           console.log(req.isAuthenticated());
           res.send({
@@ -751,53 +643,13 @@ const userRouter = express.Router();
             message: message.message
           });
         });
-      } // else {
-      //   req.login(user, (err) => {
-      //     if(err) {
-      //       console.log(err)
-      //     }
-      //     // console.log('req login :', user)
-      //     // console.log('login req.session', req.session)
-      //     // console.log('req.user :' ,req.user)
-      //     console.log('authenticated :', req.isAuthenticated())
-      //     //renvoie isAuthenticated à true dans le front
-      //     res.send({errors: err, isAuthenticated: req.isAuthenticated()})
-      //   })
-      // console.log(io);
-      // const userSockets = {}
-      // io.on('connection', function(socket) {
-      //   console.log('A client has connected');
-      //   console.log('the socket session object', socket.request.session);
-      //   console.log('the actual serialized user from passport', socket.request.session.passport.user);
-      //   //store '_id' of connected user in order to access it easily
-      //   const ID = socket.request.session.passport.user;
-      //   //store actual socket of connected user in order to access it easily
-      //   //from other modules e.g. from router
-      //   userSockets[ID] = socket;
-      //   connection.query("SELECT * FROM users WHERE userID = ? ",[ID], function(err, user){
-      //     if(err){
-      //       console.log(err)
-      //       throw(err)
-      //     } else {
-      //       // console.log(user)
-      //       const firstname = user[0].firstname;
-      //       const email = user[0].email;
-      //       const username = user[0].username;
-      //       console.log([firstname, username, email])
-      //       console.log(socket)
-      //       return socket.emit('welcome', `hello ${firstname} you are connected as ${username}`)
-      //     }
-      //   })
-      // });
-      // }
-
+      }
     })(req, res, next);
   });
   userRouter.get('/logout', (req, res) => {
     req.logout();
     req.session.destroy();
-    res.clearCookie('sid'); // console.log('authenticated :', req.isAuthenticated())
-    //envoie isAuthenticated à false dans le front
+    res.clearCookie('sid'); //envoie isAuthenticated à false dans le front
 
     res.send({
       status: 200,
