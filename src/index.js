@@ -122,12 +122,15 @@ io.on('connection', function(socket, message) {
   const socketUser = socket.request.user
   const username = socketUser[0].username;
   console.log(`${username} has opened a socket`)
+
   socket.on('createRoom', (data) => {
-    console.log(data)
+    console.log(data);
+
     socket.emit('roomCreation', function(data) {
       console.log(data)
     });
   })
+
   socket.on('join', (data) => {
     if (socket.request.user && socket.request.user.logged_in) {
 

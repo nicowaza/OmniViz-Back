@@ -117,7 +117,7 @@ connection.connect(function (err) {
     if (err) throw err;
     console.log("Table users created");
   });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, title VARCHAR(255) NOT NULL, description TEXT(600), createdat TIMESTAMP, startDate TIMESTAMP, endDate TIMESTAMP, PRIMARY KEY(roomID), FOREIGN KEY(authorID) REFERENCES users(userID))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, title VARCHAR(255) NOT NULL, description TEXT(600), createdat TIMESTAMP , startClass INT, endClass INT, PRIMARY KEY(roomID), FOREIGN KEY(authorID) REFERENCES users(userID))", function (err, result) {
     if (err) throw err;
     console.log("Table rooms created");
   });
@@ -523,6 +523,49 @@ const roomRouter = express.Router();
     });
     ;
   });
+  roomRouter.post('/', (req, res) => {
+    req.checkBody('title', 'Title field cannot be empty.').notEmpty();
+    const errors = req.validationErrors();
+
+    if (errors) {
+      console.log(`errors: ${JSON.stringify(errors)}`);
+      res.send({
+        status: 400,
+        errors: errors
+      });
+    } else {
+      let body = req.body;
+      const {
+        title,
+        description,
+        authorID,
+        createdat,
+        startClass,
+        endClass
+      } = body;
+      let query = `INSERT INTO rooms (authorID, title, description, createdat, startClass, endClass) VALUES ('${authorID}', '${title}', '${description}', '${createdat}', '${startClass}', '${endClass}')`;
+      console.log(query);
+      connection.query(query, (errors, results, fields) => {
+        if (errors) {
+          console.log(errors);
+          res.send({
+            status: 400,
+            errors: errors
+          });
+        } else {
+          console.log(results);
+          res.send({
+            status: 200,
+            "success": "new class created",
+            content: results
+          });
+        }
+
+        ;
+      });
+    }
+  });
+  console.log(io);
   return roomRouter;
 });
 

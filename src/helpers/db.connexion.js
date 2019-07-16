@@ -24,7 +24,7 @@ connection.connect(function(err) {
     console.log("Table users created")
   });
 
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, title VARCHAR(255) NOT NULL, description TEXT(600), createdat TIMESTAMP, startDate TIMESTAMP, endDate TIMESTAMP, PRIMARY KEY(roomID), FOREIGN KEY(authorID) REFERENCES users(userID))", function(err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, title VARCHAR(255) NOT NULL, description TEXT(600), createdat TIMESTAMP , startClass INT, endClass INT, PRIMARY KEY(roomID), FOREIGN KEY(authorID) REFERENCES users(userID))", function(err, result) {
     if (err) throw err;
     console.log("Table rooms created")
   });
