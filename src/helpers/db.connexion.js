@@ -29,7 +29,7 @@ connection.connect(function(err) {
     console.log("Table rooms created")
   });
 
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.tags (tagID INT NOT NULL UNIQUE AUTO_INCREMENT, userID INT NOT NULL, roomID INT NOT NULL, time TIMESTAMP NOT NULL, color VARCHAR(40), PRIMARY KEY(tagID), FOREIGN KEY(userID) REFERENCES users(userID), FOREIGN KEY(roomID) REFERENCES rooms(roomID))", function(err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.tags (tagID INT NOT NULL UNIQUE AUTO_INCREMENT, userID INT NOT NULL, roomID INT NOT NULL, time INT NOT NULL, color VARCHAR(40), PRIMARY KEY(tagID), FOREIGN KEY(userID) REFERENCES users(userID), FOREIGN KEY(roomID) REFERENCES rooms(roomID))", function(err, result) {
     if (err) throw err;
     console.log("Table tags created")
   });

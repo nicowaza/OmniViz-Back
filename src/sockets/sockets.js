@@ -1,3 +1,5 @@
+const connection = require('../helpers/db.connexion');
+
 const socket = require ('socket.io');
 
 function connectIO(server) {
@@ -24,6 +26,7 @@ function connectIO(server) {
     })
 
     socket.on('join', (data) => {
+      console.log('room data :', data)
       if ( socket.request.session.passport.user) {
 
         const socketUser =  socket.request.session.passport.user
@@ -32,6 +35,7 @@ function connectIO(server) {
         const user_id = socketUser.userID;
         const user_role = socketUser.role;
         const room = data.room;
+        const roomID = data.roomID
 
         console.log('socket:', socketUser)
 
@@ -47,16 +51,32 @@ function connectIO(server) {
         });
 
         socket.on('tag', (data) => {
-          console.log(data)
+          console.log('tag datas', data)
+          const color = data.tag;
+          const  time = data.timestamp;
+          console.log(username)
+
           socket.broadcast.to(room).emit('event', {
-            color: data.tag,
-            username: username,
-            user_id: user_id,
-            room: room,
-            time: data.timestamp,
-            },
-          )
-        })
+            color,
+            username,
+            user_id,
+            room,
+            time,
+          })
+
+
+          let query = `INSERT INTO tags (userID, roomID, time, color) VALUES ('${user_id}', '${roomID}', '${time}', '${color}')`;
+
+          console.log('tag query :', query )
+          connection.query(query, (err, results, fields) => {
+            if (err) {
+              console.log(err);
+            } else {
+              console.log(results);
+            }
+          })
+        });
+
         socket.on('disconnect', (data) => {
           console.log('disconnection :', data)
           // const username = socketUser[0].username;
@@ -65,7 +85,8 @@ function connectIO(server) {
           // console.log(room)
           // socket.leave(room, console.log(`${username} has left ${room}`));
           // socket.broadcast.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
-        })
+        });
+
         socket.on('leave', function (data) {
           console.log(`${username} has left the ${room}`)
           console.log(data)
@@ -83,7 +104,7 @@ function connectIO(server) {
         socket.on('closeRoom', function(data) {
           console.log('classe fermée :', data)
           socket.broadcast.to(room).emit('closeRoom')
-        })
+        });
       } else {
         //Ne marche pas...trouver la solution
         console.log("c'est la merde")

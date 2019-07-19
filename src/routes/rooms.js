@@ -41,7 +41,7 @@ export default function(app, passport, io) {
         let query = `INSERT INTO rooms (authorID, title, description, createdat, startClass, endClass) VALUES ('${authorID}', '${title}', '${description}', '${createdat}', '${startClass}', '${endClass}')`;
 
         console.log(query)
-
+        // const [errors, results] = createRoom(body)
           connection.query(query, (errors, results, fields) => {
             if (errors) {
               console.log(errors);

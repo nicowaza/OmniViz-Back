@@ -121,7 +121,7 @@ connection.connect(function (err) {
     if (err) throw err;
     console.log("Table rooms created");
   });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.tags (tagID INT NOT NULL UNIQUE AUTO_INCREMENT, userID INT NOT NULL, roomID INT NOT NULL, time TIMESTAMP NOT NULL, color VARCHAR(40), PRIMARY KEY(tagID), FOREIGN KEY(userID) REFERENCES users(userID), FOREIGN KEY(roomID) REFERENCES rooms(roomID))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.tags (tagID INT NOT NULL UNIQUE AUTO_INCREMENT, userID INT NOT NULL, roomID INT NOT NULL, time INT NOT NULL, color VARCHAR(40), PRIMARY KEY(tagID), FOREIGN KEY(userID) REFERENCES users(userID), FOREIGN KEY(roomID) REFERENCES rooms(roomID))", function (err, result) {
     if (err) throw err;
     console.log("Table tags created");
   });
@@ -466,7 +466,8 @@ const roomRouter = express.Router();
         endClass
       } = body;
       let query = `INSERT INTO rooms (authorID, title, description, createdat, startClass, endClass) VALUES ('${authorID}', '${title}', '${description}', '${createdat}', '${startClass}', '${endClass}')`;
-      console.log(query);
+      console.log(query); // const [errors, results] = createRoom(body)
+
       connection.query(query, (errors, results, fields) => {
         if (errors) {
           console.log(errors);
@@ -636,6 +637,8 @@ const userRouter = express.Router();
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
+const connection = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
+
 const socket = __webpack_require__(/*! socket.io */ "socket.io");
 
 function connectIO(server) {
@@ -658,6 +661,8 @@ function connectIO(server) {
       });
     });
     socket.on('join', data => {
+      console.log('room data :', data);
+
       if (socket.request.session.passport.user) {
         const socketUser = socket.request.session.passport.user;
         console.log('scoket user', socketUser);
@@ -665,6 +670,7 @@ function connectIO(server) {
         const user_id = socketUser.userID;
         const user_role = socketUser.role;
         const room = data.room;
+        const roomID = data.roomID;
         console.log('socket:', socketUser);
         socket.join(room, function (data) {
           console.log(`${username} has joined ${room}`);
@@ -677,13 +683,25 @@ function connectIO(server) {
           });
         });
         socket.on('tag', data => {
-          console.log(data);
+          console.log('tag datas', data);
+          const color = data.tag;
+          const time = data.timestamp;
+          console.log(username);
           socket.broadcast.to(room).emit('event', {
-            color: data.tag,
-            username: username,
-            user_id: user_id,
-            room: room,
-            time: data.timestamp
+            color,
+            username,
+            user_id,
+            room,
+            time
+          });
+          let query = `INSERT INTO tags (userID, roomID, time, color) VALUES ('${user_id}', '${roomID}', '${time}', '${color}')`;
+          console.log('tag query :', query);
+          connection.query(query, (err, results, fields) => {
+            if (err) {
+              console.log(err);
+            } else {
+              console.log(results);
+            }
           });
         });
         socket.on('disconnect', data => {
