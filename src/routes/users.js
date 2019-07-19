@@ -1,6 +1,7 @@
 const express = require('express')
 import connection from '../helpers/db.connexion';
-import { verifiedAuth } from '../helpers/verifyAuth';
+// import { verifiedAuth } from '../helpers/verifyAuth';
+const verifiedAuth = require('../helpers/verifyAuth');
 const mysql = require('mysql');
 const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
@@ -12,18 +13,18 @@ require('../helpers/passport').default(passport);
 const userRouter = express.Router();
 
 export default function(app, passport, io) {
-  userRouter.get('/', verifiedAuth, (req, res, next) => {
-    //les data du user authentifié peuvent être retrouvées dans l'objet req.user
-    const user = req.user[0];
-    const userdata = {
-      username: user.username,
-      email: user.email,
-      role: user.role
-    };
+  // userRouter.get('/', verifiedAuth, (req, res, next) => {
+  //   //les data du user authentifié peuvent être retrouvées dans l'objet req.user
+  //   const user = req.user[0];
+  //   const userdata = {
+  //     username: user.username,
+  //     email: user.email,
+  //     role: user.role
+  //   };
 
-    //renvoie le user + isAuthenticated à true dans le front
-    res.send({status: 200, userdata: userdata, isAuthenticated: req.isAuthenticated()})
-  });
+  //   //renvoie le user + isAuthenticated à true dans le front
+  //   res.send({status: 200, userdata: userdata, isAuthenticated: req.isAuthenticated()})
+  // });
 
   userRouter.post('/register', (req, res) => {
 
@@ -93,7 +94,7 @@ export default function(app, passport, io) {
           if(err) {
             console.log(err)
           }
-          console.log(req.isAuthenticated())
+          console.log('authentifié', req.isAuthenticated())
           res.send({user: user, isAuthenticated: req.isAuthenticated(), message: message.message})
         })
       }

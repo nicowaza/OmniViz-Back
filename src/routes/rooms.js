@@ -2,26 +2,27 @@ const express = require('express');
 const connection = require('../helpers/db.connexion');
 const verifiedAuth = require('../helpers/verifyAuth');
 const mysql = require('mysql');
-
+// import { verifiedAuth } from '../helpers/verifyAuth'
 const roomRouter = express.Router();
 
 export default function(app, passport, io) {
 
-  roomRouter.get('/', (req, res) => {
+  roomRouter.get('/', verifiedAuth, (req, res) => {
+    // console.log(req.isAuthenticated())
     connection.query('SELECT * FROM rooms ', (err, results, fields) => {
       if (err) {
         console.log(err);
         res.send({
           err
         })
-      }else {
+      } else {
         console.log(results)
         res.status(200).send({status: true, results: results});
       }
     });;
   });
 
-  roomRouter.post('/', (req, res) => {
+  roomRouter.post('/', verifiedAuth, (req, res) => {
 
       req.checkBody('title', 'Title field cannot be empty.').notEmpty();
 
@@ -48,7 +49,7 @@ export default function(app, passport, io) {
                 status:400,
                 errors:errors
               });
-            }else{
+            } else{
               console.log(results);
               res.send({
                 status:200,
@@ -59,6 +60,5 @@ export default function(app, passport, io) {
           });
         }
     });
-  console.log(io)
   return roomRouter;
 }

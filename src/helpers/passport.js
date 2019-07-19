@@ -109,13 +109,14 @@ export default function(passport) {
     passport.serializeUser(function(user, done) {
         console.log('serialize usr_id: ', user.userID)
 
-        done(null, user.userID);
+        done(null, user);
     });
 
     // used to deserialize the user
-    passport.deserializeUser(function(id, done) {
-        console.log('deserialize usr id: ', id)
+    passport.deserializeUser(function(user, done) {
 
+        const id = user.userID
+        console.log('deserialize usr id: ', id)
         connection.query("SELECT * FROM users WHERE userID = ? ",[id], function(err, user){
             done(null, user);
             // console.log('user : ', user)
