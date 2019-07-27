@@ -113,15 +113,11 @@ connection.connect(function (err) {
     if (err) throw err;
     console.log("database created");
   });
-<<<<<<< Updated upstream
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, email VARCHAR(250) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255), lastname VARCHAR(255), avatarUrl VARCHAR(500), university VARCHAR(255), password VARCHAR(255) NOT NULL, role VARCHAR(30))", function (err, result) {
-=======
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, firstname VARCHAR(255), lastname VARCHAR(255),email VARCHAR(250) NOT NULL UNIQUE, avatar TEXT, university VARCHAR(255), password VARCHAR(40) NOT NULL, role VARCHAR(30), createdat TIMESTAMP )", function (err, result) {
->>>>>>> Stashed changes
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, email VARCHAR(250) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255), lastname VARCHAR(255), avatar VARCHAR(500), university VARCHAR(255), password VARCHAR(255) NOT NULL, role VARCHAR(30))", function (err, result) {
     if (err) throw err;
     console.log("Table users created");
   });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, authorUsername VARCHAR(50), authorFirstname VARCHAR(255), authorLastname VARCHAR(255), title VARCHAR(255) NOT NULL, description TEXT(600), avatar TEXT, createdat TIMESTAMP , startClass INT, endClass INT, PRIMARY KEY(roomID), FOREIGN KEY(authorID) REFERENCES users(userID))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, authorUsername VARCHAR(50), authorFirstname VARCHAR(255), authorLastname VARCHAR(255), title VARCHAR(255) NOT NULL, description TEXT, createdat TIMESTAMP , startClass INT, endClass INT, PRIMARY KEY(roomID), FOREIGN KEY(authorID) REFERENCES users(userID))", function (err, result) {
     if (err) throw err;
     console.log("Table rooms created");
   });
@@ -217,9 +213,7 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
           message: 'no user found'
         });
       } else {
-        let hashedPassword = results[0].password;
-        console.log('hashed', hashedPassword);
-        console.log('password', password); // if the user is found but the password is wrong
+        let hashedPassword = results[0].password; // if the user is found but the password is wrong
 
         bcrypt.compare(password, hashedPassword, function (err, response) {
           if (response) {
@@ -464,13 +458,13 @@ const roomRouter = express.Router();
         description,
         authorID,
         authorLastname,
-        authorFisrtname,
-        autorUsername,
+        authorFirstname,
+        authorUsername,
         createdat,
         startClass,
         endClass
       } = body;
-      let query = `INSERT INTO rooms (authorID, authorLastname, authorFisrtname, autorUsername, title, description, createdat, startClass, endClass) VALUES ('${authorID}', '${authorLastname}, '${authorFisrtname}, '${autorUsername} '${title}', '${description}', '${createdat}', '${startClass}', '${endClass}')`;
+      let query = `INSERT INTO rooms (authorID, authorLastname, authorFirstname, authorUsername, title, description, createdat, startClass, endClass) VALUES ('${authorID}', '${authorLastname}', '${authorFirstname}', '${authorUsername}', '${title}', '${description}', '${createdat}', '${startClass}', '${endClass}')`;
       console.log(query); // const [errors, results] = createRoom(body)
 
       connection.query(query, (errors, results, fields) => {
