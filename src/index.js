@@ -1,5 +1,4 @@
 const express = require ('express');
-
 const cors = require('cors');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
@@ -9,7 +8,7 @@ const bcrypt = require('bcrypt');
 // import { verifiedAuth } from './helpers/verifyAuth';
 const verifiedAuth = require('./helpers/verifyAuth');
 const connectIO = require('./sockets/sockets.js')
-import connection from './helpers/db.connexion';
+// import connection from './helpers/db.connexion';
 
 //authentication packages
 const session = require('express-session');

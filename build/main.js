@@ -113,11 +113,15 @@ connection.connect(function (err) {
     if (err) throw err;
     console.log("database created");
   });
+<<<<<<< Updated upstream
   connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, email VARCHAR(250) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255), lastname VARCHAR(255), avatarUrl VARCHAR(500), university VARCHAR(255), password VARCHAR(255) NOT NULL, role VARCHAR(30))", function (err, result) {
+=======
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, firstname VARCHAR(255), lastname VARCHAR(255),email VARCHAR(250) NOT NULL UNIQUE, avatar TEXT, university VARCHAR(255), password VARCHAR(40) NOT NULL, role VARCHAR(30), createdat TIMESTAMP )", function (err, result) {
+>>>>>>> Stashed changes
     if (err) throw err;
     console.log("Table users created");
   });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, title VARCHAR(255) NOT NULL, description TEXT(600), createdat TIMESTAMP , startClass INT, endClass INT, PRIMARY KEY(roomID), FOREIGN KEY(authorID) REFERENCES users(userID))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, authorUsername VARCHAR(50), authorFirstname VARCHAR(255), authorLastname VARCHAR(255), title VARCHAR(255) NOT NULL, description TEXT(600), avatar TEXT, createdat TIMESTAMP , startClass INT, endClass INT, PRIMARY KEY(roomID), FOREIGN KEY(authorID) REFERENCES users(userID))", function (err, result) {
     if (err) throw err;
     console.log("Table rooms created");
   });
@@ -213,7 +217,9 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
           message: 'no user found'
         });
       } else {
-        let hashedPassword = results[0].password; // if the user is found but the password is wrong
+        let hashedPassword = results[0].password;
+        console.log('hashed', hashedPassword);
+        console.log('password', password); // if the user is found but the password is wrong
 
         bcrypt.compare(password, hashedPassword, function (err, response) {
           if (response) {
@@ -295,13 +301,9 @@ module.exports = verifiedAuth;
 /*!**********************!*\
   !*** ./src/index.js ***!
   \**********************/
-/*! no exports provided */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers/db.connexion */ "./src/helpers/db.connexion.js");
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0__);
 const express = __webpack_require__(/*! express */ "express");
 
 const cors = __webpack_require__(/*! cors */ "cors");
@@ -319,9 +321,9 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt"); // import { verified
 
 const verifiedAuth = __webpack_require__(/*! ./helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
 
-const connectIO = __webpack_require__(/*! ./sockets/sockets.js */ "./src/sockets/sockets.js");
+const connectIO = __webpack_require__(/*! ./sockets/sockets.js */ "./src/sockets/sockets.js"); // import connection from './helpers/db.connexion';
+//authentication packages
 
- //authentication packages
 
 const session = __webpack_require__(/*! express-session */ "express-session");
 
@@ -461,11 +463,14 @@ const roomRouter = express.Router();
         title,
         description,
         authorID,
+        authorLastname,
+        authorFisrtname,
+        autorUsername,
         createdat,
         startClass,
         endClass
       } = body;
-      let query = `INSERT INTO rooms (authorID, title, description, createdat, startClass, endClass) VALUES ('${authorID}', '${title}', '${description}', '${createdat}', '${startClass}', '${endClass}')`;
+      let query = `INSERT INTO rooms (authorID, authorLastname, authorFisrtname, autorUsername, title, description, createdat, startClass, endClass) VALUES ('${authorID}', '${authorLastname}, '${authorFisrtname}, '${autorUsername} '${title}', '${description}', '${createdat}', '${startClass}', '${endClass}')`;
       console.log(query); // const [errors, results] = createRoom(body)
 
       connection.query(query, (errors, results, fields) => {
@@ -563,12 +568,12 @@ const userRouter = express.Router();
       let confirmedPassword = body.confirmedPassword;
       let firstname = body.firstname;
       let lastname = body.lastname;
-      let avatarUrl = body.avatarUrl;
+      let avatar = body.avatar;
       let university = body.university;
       let role = body.role;
       const saltRounds = 10;
       bcrypt.hash(password, saltRounds, function (err, hash) {
-        let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
+        let query = `INSERT INTO users (email, username, password, firstname, lastname, avatar, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatar}', '${university}', '${role}')`;
         _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query(query, (err, results, fields) => {
           if (errors) {
             console.log(errors);

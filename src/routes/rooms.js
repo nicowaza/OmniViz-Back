@@ -36,9 +36,9 @@ export default function(app, passport, io) {
         });
       } else {
         let body = req.body;
-        const { title, description, authorID, createdat, startClass, endClass } = body
+        const { title, description, authorID, authorLastname, authorFisrtname, autorUsername, createdat, startClass, endClass } = body
 
-        let query = `INSERT INTO rooms (authorID, title, description, createdat, startClass, endClass) VALUES ('${authorID}', '${title}', '${description}', '${createdat}', '${startClass}', '${endClass}')`;
+        let query = `INSERT INTO rooms (authorID, authorLastname, authorFisrtname, autorUsername, title, description, createdat, startClass, endClass) VALUES ('${authorID}', '${authorLastname}, '${authorFisrtname}, '${autorUsername} '${title}', '${description}', '${createdat}', '${startClass}', '${endClass}')`;
 
         console.log(query)
         // const [errors, results] = createRoom(body)

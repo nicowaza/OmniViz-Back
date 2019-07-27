@@ -55,14 +55,14 @@ export default function(app, passport, io) {
       let confirmedPassword = body.confirmedPassword;
       let firstname = body.firstname;
       let lastname = body.lastname;
-      let avatarUrl = body.avatarUrl;
+      let avatar = body.avatar;
       let university = body.university;
       let role = body.role;
 
       const saltRounds = 10;
 
       bcrypt.hash(password, saltRounds, function(err, hash) {
-        let query = `INSERT INTO users (email, username, password, firstname, lastname, avatarUrl, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatarUrl}', '${university}', '${role}')`;
+        let query = `INSERT INTO users (email, username, password, firstname, lastname, avatar, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatar}', '${university}', '${role}')`;
 
         connection.query(query, (err, results, fields) => {
           if (errors) {
