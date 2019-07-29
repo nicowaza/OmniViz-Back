@@ -646,13 +646,11 @@ function connectIO(server) {
 
   io.on('connection', function (socket, message) {
     //  on peut récupérer le user serialisé par passport et présent dans l'objet socket.request.session. Les infos de ce user sont disponible pour utilisation dans le reste de l'app
-    console.log('A client has connected');
-    console.log('the socket session object', socket.request.session);
-    console.log('the actual serialized user from passport', socket.request.session.passport);
-    const {
-      username
-    } = socket.request.session.passport.user;
-    console.log(`${username} has opened a socket`);
+    console.log('A client has connected'); // console.log('the socket session object', socket.request.session);
+    // console.log('the actual serialized user from passport', socket.request.session.passport);
+    // const { username } = socket.request.session.passport.user
+    // console.log(`${username} has opened a socket`)
+
     socket.on('createRoom', data => {
       console.log(data);
       socket.emit('roomCreation', function (data) {
@@ -668,17 +666,24 @@ function connectIO(server) {
         const username = socketUser.username;
         const user_id = socketUser.userID;
         const user_role = socketUser.role;
-        const room = data.room;
+        const roomName = data.roomName;
         const roomID = data.roomID;
+        const authorLastname = data.authorLastname;
+        const authorFirstname = data.authorFirstname;
         console.log('socket:', socketUser);
-        socket.join(room, function (data) {
-          console.log(`${username} has joined ${room}`);
-          io.in(room).emit('joiningEvent', {
-            message: `${username} has joined ${room}`,
+        socket.join(roomID, function (data) {
+          console.log('room data', data);
+          console.log(`${username} has joined ${roomName}`);
+          console.log('author last name', authorLastname);
+          io.in(roomID).emit('joiningEvent', {
+            message: `${username} has joined room ${roomName}`,
             username,
             user_id,
             user_role,
-            room
+            roomID,
+            roomName,
+            authorFirstname,
+            authorLastname
           });
         });
         socket.on('tag', data => {
@@ -686,11 +691,11 @@ function connectIO(server) {
           const color = data.tag;
           const time = data.timestamp;
           console.log(username);
-          socket.broadcast.to(room).emit('event', {
+          socket.broadcast.to(roomID).emit('event', {
             color,
             username,
             user_id,
-            room,
+            roomName,
             time
           });
           let query = `INSERT INTO tags (userID, roomID, time, color) VALUES ('${user_id}', '${roomID}', '${time}', '${color}')`;
@@ -712,11 +717,11 @@ function connectIO(server) {
           // socket.broadcast.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
         });
         socket.on('leave', function (data) {
-          console.log(`${username} has left the ${room}`);
+          console.log(`${username} has left the ${roomName}`);
           console.log(data);
-          socket.leave(room, function (data) {
-            socket.broadcast.to(room).emit('leavingEvent', {
-              message: `${username} has left ${room}`,
+          socket.leave(roomID, function (data) {
+            socket.broadcast.to(roomID).emit('leavingEvent', {
+              message: `${username} has left ${roomName}`,
               username,
               user_id,
               user_role
@@ -725,7 +730,7 @@ function connectIO(server) {
         });
         socket.on('closeRoom', function (data) {
           console.log('classe fermée :', data);
-          socket.broadcast.to(room).emit('closeRoom');
+          socket.broadcast.to(roomID).emit('closeRoom');
         });
       } else {
         //Ne marche pas...trouver la solution
