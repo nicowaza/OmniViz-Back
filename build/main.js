@@ -441,6 +441,30 @@ const roomRouter = express.Router();
     });
     ;
   });
+  roomRouter.get('/:id', verifiedAuth, (req, res) => {
+    const id = req.params.id;
+    let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass, tags.tagID, tags.userID, tags.time, tags.color
+    FROM rooms
+    INNER JOIN tags ON rooms.roomID = tags.roomID
+    WHERE rooms.roomID = ${id}`;
+    connection.query(query, (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.send({
+          status: 400,
+          errors: err
+        });
+      } else {
+        console.log(results);
+        res.send({
+          status: 200,
+          content: results
+        });
+      }
+
+      ;
+    });
+  });
   roomRouter.post('/', verifiedAuth, (req, res) => {
     req.checkBody('title', 'Title field cannot be empty.').notEmpty();
     const errors = req.validationErrors();
@@ -658,21 +682,22 @@ function connectIO(server) {
       });
     });
     socket.on('join', data => {
-      console.log('room data :', data);
-
+      // console.log('room data :', data)
       if (socket.request.session.passport.user) {
         const socketUser = socket.request.session.passport.user;
         console.log('scoket user', socketUser);
         const username = socketUser.username;
         const user_id = socketUser.userID;
         const user_role = socketUser.role;
+        const roomData = data;
         const roomName = data.roomName;
         const roomID = data.roomID;
         const authorLastname = data.authorLastname;
-        const authorFirstname = data.authorFirstname;
+        const authorFirstname = data.authorFirstname; // console.log('room data', roomData)
+
         console.log('socket:', socketUser);
-        socket.join(roomID, function (data) {
-          console.log('room data', data);
+        socket.join(roomID, function () {
+          console.log('room data', roomData);
           console.log(`${username} has joined ${roomName}`);
           console.log('author last name', authorLastname);
           io.in(roomID).emit('joiningEvent', {
@@ -680,10 +705,11 @@ function connectIO(server) {
             username,
             user_id,
             user_role,
-            roomID,
-            roomName,
-            authorFirstname,
-            authorLastname
+            roomData // roomID,
+            // roomName,
+            // authorFirstname,
+            // authorLastname,
+
           });
         });
         socket.on('tag', data => {

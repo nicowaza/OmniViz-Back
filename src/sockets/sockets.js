@@ -26,7 +26,7 @@ function connectIO(server) {
     })
 
     socket.on('join', (data) => {
-      console.log('room data :', data)
+      // console.log('room data :', data)
       if ( socket.request.session.passport.user) {
 
         const socketUser =  socket.request.session.passport.user
@@ -34,16 +34,18 @@ function connectIO(server) {
         const username = socketUser.username;
         const user_id = socketUser.userID;
         const user_role = socketUser.role;
+        const roomData = data;
         const roomName = data.roomName;
         const roomID = data.roomID;
         const authorLastname = data.authorLastname;
         const authorFirstname = data.authorFirstname;
 
+        // console.log('room data', roomData)
 
         console.log('socket:', socketUser)
 
-        socket.join(roomID, function(data) {
-          console.log('room data', data)
+        socket.join(roomID, function() {
+          console.log('room data', roomData)
           console.log(`${username} has joined ${roomName}`);
           console.log('author last name', authorLastname)
           io.in(roomID).emit('joiningEvent', (
@@ -52,10 +54,11 @@ function connectIO(server) {
             username,
             user_id,
             user_role,
-            roomID,
-            roomName,
-            authorFirstname,
-            authorLastname,
+            roomData
+            // roomID,
+            // roomName,
+            // authorFirstname,
+            // authorLastname,
           }));
         });
 

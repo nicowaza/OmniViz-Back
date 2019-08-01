@@ -22,6 +22,29 @@ export default function(app, passport, io) {
     });;
   });
 
+  roomRouter.get('/:id', verifiedAuth, (req,res) => {
+    const id = req.params.id;
+    let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass, tags.tagID, tags.userID, tags.time, tags.color
+    FROM rooms
+    INNER JOIN tags ON rooms.roomID = tags.roomID
+    WHERE rooms.roomID = ${id}`
+    connection.query(query, (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.send({
+          status:400,
+          errors:err
+        });
+      }else{
+        console.log(results);
+        res.send({
+          status:200,
+          content: results,
+        });
+      };
+    })
+  })
+
   roomRouter.post('/', verifiedAuth, (req, res) => {
 
       req.checkBody('title', 'Title field cannot be empty.').notEmpty();
