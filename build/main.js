@@ -103,7 +103,8 @@ const connection = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
-  database: "OmnivizTest"
+  database: "OmnivizTest",
+  multipleStatements: true
 });
 connection.connect(function (err) {
   if (err) throw err;
@@ -443,10 +444,15 @@ const roomRouter = express.Router();
   });
   roomRouter.get('/:id', verifiedAuth, (req, res) => {
     const id = req.params.id;
-    let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass, tags.tagID, tags.userID, tags.time, tags.color
+    let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass
     FROM rooms
-    INNER JOIN tags ON rooms.roomID = tags.roomID
-    WHERE rooms.roomID = ${id}`;
+    WHERE rooms.roomID = ${id}; SELECT tags.tagID, tags.userID, tags.time, tags.color
+    FROM tags
+    WHERE tags.roomID = ${id}`; // let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass, tags.tagID, tags.userID, tags.time, tags.color
+    // FROM rooms
+    // INNER JOIN tags ON rooms.roomID = tags.roomID
+    // WHERE rooms.roomID = ${id}`
+
     connection.query(query, (err, results, fields) => {
       if (err) {
         console.log(err);
@@ -455,10 +461,12 @@ const roomRouter = express.Router();
           errors: err
         });
       } else {
-        console.log(results);
+        console.log(results[0]);
+        console.log(results[1]);
         res.send({
           status: 200,
-          content: results
+          content1: results[0],
+          content2: results[1]
         });
       }
 

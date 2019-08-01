@@ -7,6 +7,7 @@ const connection = mysql.createConnection({
   user: "root",
   password: "",
   database: "OmnivizTest",
+  multipleStatements: true,
 });
 
 connection.connect(function(err) {
