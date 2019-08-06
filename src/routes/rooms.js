@@ -22,6 +22,21 @@ export default function(app, passport, io) {
     });;
   });
 
+  roomRouter.get('/startDate', verifiedAuth, (req, res) => {
+    // console.log(req.isAuthenticated())
+    connection.query('SELECT * FROM rooms ORDER BY `startClass` DESC', (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.send({
+          err
+        })
+      } else {
+        console.log(results)
+        res.status(200).send({status: true, results: results});
+      }
+    });;
+  });
+
   roomRouter.get('/:id', verifiedAuth, (req,res) => {
     const id = req.params.id;
     let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass
@@ -66,9 +81,9 @@ export default function(app, passport, io) {
         });
       } else {
         let body = req.body;
-        const { title, description, authorID, authorLastname, authorFirstname, authorUsername, createdat, startClass, endClass } = body
+        const { title, description, authorID, authorLastname, authorFirstname, authorUsername, startClass, endClass } = body
 
-        let query = `INSERT INTO rooms (authorID, authorLastname, authorFirstname, authorUsername, title, description, createdat, startClass, endClass) VALUES ('${authorID}', '${authorLastname}', '${authorFirstname}', '${authorUsername}', '${title}', '${description}', '${createdat}', '${startClass}', '${endClass}')`;
+        let query = `INSERT INTO rooms (authorID, authorLastname, authorFirstname, authorUsername, title, description, startClass, endClass) VALUES ('${authorID}', '${authorLastname}', '${authorFirstname}', '${authorUsername}', '${title}', '${description}', '${startClass}', '${endClass}')`;
 
         console.log(query)
         // const [errors, results] = createRoom(body)
