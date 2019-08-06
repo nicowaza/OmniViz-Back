@@ -2,11 +2,13 @@ const express = require('express');
 const connection = require('../helpers/db.connexion');
 const verifiedAuth = require('../helpers/verifyAuth');
 const mysql = require('mysql');
+const moment = require('moment');
 // import { verifiedAuth } from '../helpers/verifyAuth'
 const roomRouter = express.Router();
 
 export default function(app, passport, io) {
 
+  //cours classés par ordre id (ordre de création)
   roomRouter.get('/', verifiedAuth, (req, res) => {
     // console.log(req.isAuthenticated())
     connection.query('SELECT * FROM rooms ', (err, results, fields) => {
@@ -22,9 +24,32 @@ export default function(app, passport, io) {
     });;
   });
 
+  // cours classés par heure de début de classe
   roomRouter.get('/startDate', verifiedAuth, (req, res) => {
     // console.log(req.isAuthenticated())
     connection.query('SELECT * FROM rooms ORDER BY `startClass` DESC', (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.send({
+          err
+        })
+      } else {
+        console.log(results)
+        res.status(200).send({status: true, results: results});
+      }
+    });;
+  });
+
+  roomRouter.get('/classOfTheDay', verifiedAuth, (req, res) => {
+    // console.log(req.isAuthenticated())
+    const now = moment();
+    const startOfDay = now.startOf('day').format('X');
+    const endOfDay = now.endOf('day').format('X');
+    console.log('start', startOfDay)
+    console.log('end', endOfDay)
+    // console.log('data is ', date)
+    const query = `SELECT * FROM rooms WHERE startClass >= ${startOfDay} AND startClass <= ${endOfDay}`
+    connection.query(query , (err, results, fields) => {
       if (err) {
         console.log(err);
         res.send({
