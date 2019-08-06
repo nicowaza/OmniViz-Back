@@ -24,9 +24,30 @@ export default function(app, passport, io) {
     });;
   });
 
+  // liste des cours auquels à participé le user
+  roomRouter.get('/myRooms/:id', verifiedAuth, (req, res) => {
+    // récupération de l'id du user
+    const id = req.params.id;
+    console.log(id)
+
+    // utilisation d'une subquery pour d'abord récupérer l'id des cours auquel le user à participé (table participants). On passe ensuite ces id à la query qui liste les cours
+    const query = `SELECT * FROM rooms WHERE roomID IN (SELECT roomID FROM Participants WHERE userID = ${id})`
+
+    connection.query(query, (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.send({
+          err
+        })
+      } else {
+        console.log(results)
+        res.status(200).send({status: true, results: results});
+      }
+    });
+  });
+
   // cours classés par heure de début de classe
   roomRouter.get('/startDate', verifiedAuth, (req, res) => {
-    // console.log(req.isAuthenticated())
     connection.query('SELECT * FROM rooms ORDER BY `startClass` DESC', (err, results, fields) => {
       if (err) {
         console.log(err);
@@ -40,14 +61,14 @@ export default function(app, passport, io) {
     });;
   });
 
+  // cours du jour
   roomRouter.get('/classOfTheDay', verifiedAuth, (req, res) => {
-    // console.log(req.isAuthenticated())
     const now = moment();
+    // date de début du jour sous forme de timestamp en secondes
     const startOfDay = now.startOf('day').format('X');
+    // date de fin du jour sous forme de timestamp en secondes
     const endOfDay = now.endOf('day').format('X');
-    console.log('start', startOfDay)
-    console.log('end', endOfDay)
-    // console.log('data is ', date)
+    // renvoie uniquement les cours de la journée (dont la date de début est compris entre le début de la fin du jour 0h 00m 00sec et 23h 59m 59sec)
     const query = `SELECT * FROM rooms WHERE startClass >= ${startOfDay} AND startClass <= ${endOfDay}`
     connection.query(query , (err, results, fields) => {
       if (err) {
@@ -62,6 +83,7 @@ export default function(app, passport, io) {
     });;
   });
 
+  // cours séléctionné par ID
   roomRouter.get('/:id', verifiedAuth, (req,res) => {
     const id = req.params.id;
     let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass

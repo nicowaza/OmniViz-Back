@@ -118,13 +118,18 @@ connection.connect(function (err) {
     if (err) throw err;
     console.log("Table users created");
   });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, authorUsername VARCHAR(50), authorFirstname VARCHAR(255), authorLastname VARCHAR(255), title VARCHAR(255) NOT NULL, description TEXT, createdat TIMESTAMP , startClass INT, endClass INT, PRIMARY KEY(roomID), FOREIGN KEY(authorID) REFERENCES users(userID))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, authorUsername VARCHAR(50), authorFirstname VARCHAR(255), authorLastname VARCHAR(255), title VARCHAR(255) NOT NULL, description TEXT, createdat TIMESTAMP , startClass INT, endClass INT, participantsID INT, PRIMARY KEY(roomID), FOREIGN KEY(participantsID) REFERENCES users(userID), FOREIGN KEY(authorID) REFERENCES users(userID))", function (err, result) {
     if (err) throw err;
     console.log("Table rooms created");
   });
   connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.tags (tagID INT NOT NULL UNIQUE AUTO_INCREMENT, userID INT NOT NULL, roomID INT NOT NULL, time INT NOT NULL, color VARCHAR(40), PRIMARY KEY(tagID), FOREIGN KEY(userID) REFERENCES users(userID), FOREIGN KEY(roomID) REFERENCES rooms(roomID))", function (err, result) {
     if (err) throw err;
     console.log("Table tags created");
+  }); // création d'une table de composition (association many to many) avec clé primaire composite et 2 foreign key
+
+  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.Participants (roomID INT NOT NULL, userID INT NOT NULL, CONSTRAINT FK_ParticipantsRooms FOREIGN KEY(roomID) REFERENCES rooms(roomID), CONSTRAINT FK_ParticipantsUsers FOREIGN KEY(userID) REFERENCES users(userID), CONSTRAINT PK_Participants PRIMARY KEY(roomID, userID))", function (err, result) {
+    if (err) throw err;
+    console.log("Table Participants created");
   });
 });
 module.exports = connection;
@@ -444,10 +449,31 @@ const roomRouter = express.Router();
       }
     });
     ;
+  }); // liste des cours auquels à participé le user
+
+  roomRouter.get('/myRooms/:id', verifiedAuth, (req, res) => {
+    // récupération de l'id du user
+    const id = req.params.id;
+    console.log(id); // utilisation d'une subquery pour d'abord récupérer l'id des cours auquel le user à participé (table participants). On passe ensuite ces id à la query qui liste les cours
+
+    const query = `SELECT * FROM rooms WHERE roomID IN (SELECT roomID FROM Participants WHERE userID = ${id})`;
+    connection.query(query, (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.send({
+          err
+        });
+      } else {
+        console.log(results);
+        res.status(200).send({
+          status: true,
+          results: results
+        });
+      }
+    });
   }); // cours classés par heure de début de classe
 
   roomRouter.get('/startDate', verifiedAuth, (req, res) => {
-    // console.log(req.isAuthenticated())
     connection.query('SELECT * FROM rooms ORDER BY `startClass` DESC', (err, results, fields) => {
       if (err) {
         console.log(err);
@@ -463,14 +489,14 @@ const roomRouter = express.Router();
       }
     });
     ;
-  });
+  }); // cours du jour
+
   roomRouter.get('/classOfTheDay', verifiedAuth, (req, res) => {
-    // console.log(req.isAuthenticated())
-    const now = moment();
-    const startOfDay = now.startOf('day').format('X');
-    const endOfDay = now.endOf('day').format('X');
-    console.log('start', startOfDay);
-    console.log('end', endOfDay); // console.log('data is ', date)
+    const now = moment(); // date de début du jour sous forme de timestamp en secondes
+
+    const startOfDay = now.startOf('day').format('X'); // date de fin du jour sous forme de timestamp en secondes
+
+    const endOfDay = now.endOf('day').format('X'); // renvoie uniquement les cours de la journée (dont la date de début est compris entre le début de la fin du jour 0h 00m 00sec et 23h 59m 59sec)
 
     const query = `SELECT * FROM rooms WHERE startClass >= ${startOfDay} AND startClass <= ${endOfDay}`;
     connection.query(query, (err, results, fields) => {
@@ -488,7 +514,8 @@ const roomRouter = express.Router();
       }
     });
     ;
-  });
+  }); // cours séléctionné par ID
+
   roomRouter.get('/:id', verifiedAuth, (req, res) => {
     const id = req.params.id;
     let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass
@@ -764,6 +791,15 @@ function connectIO(server) {
             // authorFirstname,
             // authorLastname,
 
+          });
+          let query = `INSERT IGNORE INTO Participants (userID, roomID) VALUES ('${user_id}', '${roomID}')`;
+          console.log('tag query :', query);
+          connection.query(query, (err, results, fields) => {
+            if (err) {
+              console.log(err);
+            } else {
+              console.log(results);
+            }
           });
         });
         socket.on('tag', data => {
