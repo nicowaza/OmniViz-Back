@@ -22,16 +22,16 @@ require('./helpers/passport').default(passport);
 const app = express();
 
 //static files
-app.use(express.static('../public'));
+// app.use(express.static('../public'));
 
 // Handle production
 if (process.env.NODE_ENV === 'production') {
   // Static folder
   console.log(process.env.NODE_ENV)
-  app.use(express.static('../production/dist'));
+  app.use(express.static('../public'));
 
   // Handle SPA
-  app.get(/.*/, (req, res) => res.sendFile('../production/dist/index.html'));
+  app.get(/.*/, (req, res) => res.sendFile('../public/index.html'));
 }
 
 const port = process.env.PORT || 5000;
