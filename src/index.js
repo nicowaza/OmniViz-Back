@@ -27,7 +27,7 @@ app.use(express.static('../public'));
 // Handle production
 if (process.env.NODE_ENV === 'production') {
   // Static folder
-  app.use(express.static(__dirname + '/production/dist'));
+  app.use(express.static('../production/dist'));
 
   // Handle SPA
   app.get(/.*/, (req, res) => res.sendFile(__dirname + '/production/dist/index.html'));
