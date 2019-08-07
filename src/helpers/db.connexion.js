@@ -3,10 +3,10 @@
 const mysql = require('mysql');
 
 const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "OmnivizTest",
+  host: "mysql://bee554d1ffd95a:6c8ab685@eu-cdbr-west-02.cleardb.net/heroku_afe62a80f5c10f7?reconnect=true",
+  user: "b7482ad97fe0f8",
+  password: "21d314c9 ",
+  database: "",
   multipleStatements: true,
 });
 
