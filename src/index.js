@@ -21,13 +21,24 @@ require('./helpers/passport').default(passport);
 
 const app = express();
 
+//static files
+app.use(express.static('../public'));
+
+// Handle production
+if (process.env.NODE_ENV === 'production') {
+  // Static folder
+  app.use(express.static(__dirname + '/production/dist'));
+
+  // Handle SPA
+  app.get(/.*/, (req, res) => res.sendFile(__dirname + '/production/dist/index.html'));
+}
+
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
 
 const io = connectIO(server)
 
-//static files
-app.use(express.static('../public'));
+
 
 //logger
 app.use(morgan('combined'));
