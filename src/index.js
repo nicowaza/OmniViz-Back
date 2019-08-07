@@ -59,11 +59,11 @@ app.use(expressValidator());
 
 //mySQLStore
 const options = {
-  host: 'localhost',
-  // port: 5000,
-  user: 'root',
-  password: '',
-  database: 'OmnivizTest'
+  host: 'eu-cdbr-west-02.cleardb.net',
+  user: "b7482ad97fe0f8",
+  password: "21d314c9",
+  port: "3306",
+  database: 'heroku_7d8051b18f89a33'
 };
 const sessionStore = new MySQLStore(options);
 
