@@ -27,6 +27,7 @@ app.use(express.static('../public'));
 // Handle production
 if (process.env.NODE_ENV === 'production') {
   // Static folder
+  console.log(process.env.NODE_ENV)
   app.use(express.static('../production/dist'));
 
   // Handle SPA
