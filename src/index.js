@@ -30,7 +30,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static('../production/dist'));
 
   // Handle SPA
-  app.get(/.*/, (req, res) => res.sendFile(__dirname + '/production/dist/index.html'));
+  app.get(/.*/, (req, res) => res.sendFile('../production/dist/index.html'));
 }
 
 const port = process.env.PORT || 5000;
