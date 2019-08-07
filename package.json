@@ -30,7 +30,7 @@
   },
   "scripts": {
     "dev": "backpack",
-    "start": "node src/index.js"
+    "start": "backpack"
   },
   "repository": {
     "type": "git",
