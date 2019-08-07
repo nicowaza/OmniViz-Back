@@ -1,5 +1,5 @@
 const express = require('express')
-import connection from '../helpers/db.connexion';
+const connection = require ('../helpers/db.connexion');
 // import { verifiedAuth } from '../helpers/verifyAuth';
 const verifiedAuth = require('../helpers/verifyAuth');
 const mysql = require('mysql');
