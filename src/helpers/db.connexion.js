@@ -15,7 +15,7 @@ connection.connect(function(err) {
   if (err) throw err;
   console.log("DB Connected!");
 
-  // // création de la dB
+  // création de la dB
   // connection.query("CREATE DATABASE IF NOT EXISTS OmnivizTest CHARACTER SET 'utf8'", function (err, result) {
   //   if (err) throw err;
   //   console.log("database created");

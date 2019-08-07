@@ -100,34 +100,35 @@ module.exports =
 const mysql = __webpack_require__(/*! mysql */ "mysql");
 
 const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "OmnivizTest",
+  host: "eu-cdbr-west-02.cleardb.net",
+  user: "b7482ad97fe0f8",
+  password: "21d314c9",
+  port: "3306",
+  database: "heroku_7d8051b18f89a33",
   multipleStatements: true
 });
 connection.connect(function (err) {
   if (err) throw err;
   console.log("DB Connected!"); // création de la dB
+  // connection.query("CREATE DATABASE IF NOT EXISTS OmnivizTest CHARACTER SET 'utf8'", function (err, result) {
+  //   if (err) throw err;
+  //   console.log("database created");
+  // });
 
-  connection.query("CREATE DATABASE IF NOT EXISTS OmnivizTest CHARACTER SET 'utf8'", function (err, result) {
-    if (err) throw err;
-    console.log("database created");
-  });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, email VARCHAR(250) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255), lastname VARCHAR(255), avatar VARCHAR(500), university VARCHAR(255), password VARCHAR(255) NOT NULL, role VARCHAR(30))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS heroku_7d8051b18f89a33.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, email VARCHAR(250) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255), lastname VARCHAR(255), avatar VARCHAR(500), university VARCHAR(255), password VARCHAR(255) NOT NULL, role VARCHAR(30))", function (err, result) {
     if (err) throw err;
     console.log("Table users created");
   });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, authorUsername VARCHAR(50), authorFirstname VARCHAR(255), authorLastname VARCHAR(255), title VARCHAR(255) NOT NULL, description TEXT, createdat TIMESTAMP , startClass INT, endClass INT, participantsID INT, PRIMARY KEY(roomID), FOREIGN KEY(participantsID) REFERENCES users(userID), FOREIGN KEY(authorID) REFERENCES users(userID))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS heroku_7d8051b18f89a33.rooms (roomID INT NOT NULL UNIQUE AUTO_INCREMENT, authorID INT NOT NULL, authorUsername VARCHAR(50), authorFirstname VARCHAR(255), authorLastname VARCHAR(255), title VARCHAR(255) NOT NULL, description TEXT, createdat TIMESTAMP , startClass INT, endClass INT, participantsID INT, PRIMARY KEY(roomID), FOREIGN KEY(participantsID) REFERENCES users(userID), FOREIGN KEY(authorID) REFERENCES users(userID))", function (err, result) {
     if (err) throw err;
     console.log("Table rooms created");
   });
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.tags (tagID INT NOT NULL UNIQUE AUTO_INCREMENT, userID INT NOT NULL, roomID INT NOT NULL, time INT NOT NULL, color VARCHAR(40), PRIMARY KEY(tagID), FOREIGN KEY(userID) REFERENCES users(userID), FOREIGN KEY(roomID) REFERENCES rooms(roomID))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS heroku_7d8051b18f89a33.tags (tagID INT NOT NULL UNIQUE AUTO_INCREMENT, userID INT NOT NULL, roomID INT NOT NULL, time INT NOT NULL, color VARCHAR(40), PRIMARY KEY(tagID), FOREIGN KEY(userID) REFERENCES users(userID), FOREIGN KEY(roomID) REFERENCES rooms(roomID))", function (err, result) {
     if (err) throw err;
     console.log("Table tags created");
   }); // création d'une table de composition (association many to many) avec clé primaire composite et 2 foreign key
 
-  connection.query("CREATE TABLE IF NOT EXISTS OmnivizTest.Participants (roomID INT NOT NULL, userID INT NOT NULL, CONSTRAINT FK_ParticipantsRooms FOREIGN KEY(roomID) REFERENCES rooms(roomID), CONSTRAINT FK_ParticipantsUsers FOREIGN KEY(userID) REFERENCES users(userID), CONSTRAINT PK_Participants PRIMARY KEY(roomID, userID))", function (err, result) {
+  connection.query("CREATE TABLE IF NOT EXISTS heroku_7d8051b18f89a33.Participants (roomID INT NOT NULL, userID INT NOT NULL, CONSTRAINT FK_ParticipantsRooms FOREIGN KEY(roomID) REFERENCES rooms(roomID), CONSTRAINT FK_ParticipantsUsers FOREIGN KEY(userID) REFERENCES users(userID), CONSTRAINT PK_Participants PRIMARY KEY(roomID, userID))", function (err, result) {
     if (err) throw err;
     console.log("Table Participants created");
   });
@@ -145,13 +146,12 @@ module.exports = connection;
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0__);
 const LocalStrategy = __webpack_require__(/*! passport-local */ "passport-local").Strategy;
 
 const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
- // expose this function to our app using module.exports
+const connection = __webpack_require__(/*! ./db.connexion */ "./src/helpers/db.connexion.js"); // expose this function to our app using module.exports
+
 
 /* harmony default export */ __webpack_exports__["default"] = (function (passport) {
   // =========================================================================
@@ -209,7 +209,7 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 
   }, function (req, email, password, done) {
     // callback with email and password from our form
-    _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query("SELECT * FROM users WHERE email = ?", [email], function (err, results, fields, user) {
+    connection.query("SELECT * FROM users WHERE email = ?", [email], function (err, results, fields, user) {
       if (err) return done(err);
 
       if (results.length === 0) {
@@ -257,7 +257,7 @@ const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
   passport.deserializeUser(function (user, done) {
     const id = user.userID;
     console.log('deserialize usr id: ', id);
-    _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query("SELECT * FROM users WHERE userID = ? ", [id], function (err, user) {
+    connection.query("SELECT * FROM users WHERE userID = ? ", [id], function (err, user) {
       done(null, user); // console.log('user : ', user)
     });
   });
@@ -334,12 +334,15 @@ const passport = __webpack_require__(/*! passport */ "passport"); // const passp
 
 __webpack_require__(/*! ./helpers/passport */ "./src/helpers/passport.js").default(passport);
 
-const app = express();
+const app = express(); //static files
+
+app.use(express.static('production')); // Handle production
+
+if (false) {}
+
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
-const io = connectIO(server); //static files
-
-app.use(express.static('../public')); //logger
+const io = connectIO(server); //logger
 
 app.use(morgan('combined')); //CROSS ORIGINS
 
@@ -360,11 +363,11 @@ app.use(cookieParser());
 app.use(expressValidator()); //mySQLStore
 
 const options = {
-  host: 'localhost',
-  // port: 5000,
-  user: 'root',
-  password: '',
-  database: 'OmnivizTest'
+  host: 'eu-cdbr-west-02.cleardb.net',
+  user: "b7482ad97fe0f8",
+  password: "21d314c9",
+  port: "3306",
+  database: 'heroku_7d8051b18f89a33'
 };
 const sessionStore = new MySQLStore(options); // express sessions
 
@@ -606,11 +609,10 @@ const roomRouter = express.Router();
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js");
-/* harmony import */ var _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0__);
 const express = __webpack_require__(/*! express */ "express");
 
- // import { verifiedAuth } from '../helpers/verifyAuth';
+const connection = __webpack_require__(/*! ../helpers/db.connexion */ "./src/helpers/db.connexion.js"); // import { verifiedAuth } from '../helpers/verifyAuth';
+
 
 const verifiedAuth = __webpack_require__(/*! ../helpers/verifyAuth */ "./src/helpers/verifyAuth.js");
 
@@ -673,7 +675,7 @@ const userRouter = express.Router();
       const saltRounds = 10;
       bcrypt.hash(password, saltRounds, function (err, hash) {
         let query = `INSERT INTO users (email, username, password, firstname, lastname, avatar, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatar}', '${university}', '${role}')`;
-        _helpers_db_connexion__WEBPACK_IMPORTED_MODULE_0___default.a.query(query, (err, results, fields) => {
+        connection.query(query, (err, results, fields) => {
           if (errors) {
             console.log(errors);
             res.send({
@@ -786,14 +788,10 @@ function connectIO(server) {
             username,
             user_id,
             user_role,
-            roomData // roomID,
-            // roomName,
-            // authorFirstname,
-            // authorLastname,
+            roomData
+          }); // insert les participants au cours dans la table participants que si ils ne sont pas déjà enregistré pour ce cours
 
-          });
           let query = `INSERT IGNORE INTO Participants (userID, roomID) VALUES ('${user_id}', '${roomID}')`;
-          console.log('tag query :', query);
           connection.query(query, (err, results, fields) => {
             if (err) {
               console.log(err);
@@ -815,7 +813,6 @@ function connectIO(server) {
             time
           });
           let query = `INSERT INTO tags (userID, roomID, time, color) VALUES ('${user_id}', '${roomID}', '${time}', '${color}')`;
-          console.log('tag query :', query);
           connection.query(query, (err, results, fields) => {
             if (err) {
               console.log(err);
