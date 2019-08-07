@@ -1,6 +1,6 @@
 const LocalStrategy   = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
-import connection from './helpers/db.connexion';
+const connection = require('./helpers/db.connexion');
 
 // expose this function to our app using module.exports
 export default function(passport) {
