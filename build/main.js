@@ -786,14 +786,10 @@ function connectIO(server) {
             username,
             user_id,
             user_role,
-            roomData // roomID,
-            // roomName,
-            // authorFirstname,
-            // authorLastname,
+            roomData
+          }); // insert les participants au cours dans la table participants que si ils ne sont pas déjà enregistré pour ce cours
 
-          });
           let query = `INSERT IGNORE INTO Participants (userID, roomID) VALUES ('${user_id}', '${roomID}')`;
-          console.log('tag query :', query);
           connection.query(query, (err, results, fields) => {
             if (err) {
               console.log(err);
@@ -815,7 +811,6 @@ function connectIO(server) {
             time
           });
           let query = `INSERT INTO tags (userID, roomID, time, color) VALUES ('${user_id}', '${roomID}', '${time}', '${color}')`;
-          console.log('tag query :', query);
           connection.query(query, (err, results, fields) => {
             if (err) {
               console.log(err);
@@ -832,10 +827,10 @@ function connectIO(server) {
           // socket.leave(room, console.log(`${username} has left ${room}`));
           // socket.broadcast.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
         });
-        socket.on('leave', function (data) {
+        socket.on('leave', data => {
           console.log(`${username} has left the ${roomName}`);
           console.log(data);
-          socket.leave(roomID, function (data) {
+          socket.leave(roomID, data => {
             socket.broadcast.to(roomID).emit('leavingEvent', {
               message: `${username} has left ${roomName}`,
               username,
@@ -844,9 +839,10 @@ function connectIO(server) {
             });
           });
         });
-        socket.on('closeRoom', function (data) {
-          console.log('classe fermée :', data);
-          socket.broadcast.to(roomID).emit('closeRoom');
+        socket.on('closeRoom', () => {
+          // on devrait pouvoir récupérer le username envoyé depuis le front via closeRoom mais data ne marche pas...pkoi ?
+          console.log('classe fermée :', username);
+          socket.broadcast.to(roomID).emit('closeRoom', username);
         });
       } else {
         //Ne marche pas...trouver la solution

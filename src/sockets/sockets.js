@@ -104,11 +104,11 @@ function connectIO(server) {
           // socket.broadcast.to(room).emit('leavingEvent',({ message: `${username} has left the room ${room}`}));
         });
 
-        socket.on('leave', function (data) {
+        socket.on('leave', (data) => {
           console.log(`${username} has left the ${roomName}`)
           console.log(data)
 
-          socket.leave(roomID, function(data) {
+          socket.leave(roomID, data => {
             socket.broadcast.to(roomID).emit('leavingEvent', ({
               message: `${username} has left ${roomName}`,
               username,
@@ -118,9 +118,10 @@ function connectIO(server) {
           });
         });
 
-        socket.on('closeRoom', function(data) {
-          console.log('classe fermée :', data)
-          socket.broadcast.to(roomID).emit('closeRoom')
+        socket.on('closeRoom', () => {
+          // on devrait pouvoir récupérer le username envoyé depuis le front via closeRoom mais data ne marche pas...pkoi ?
+          console.log('classe fermée :', username)
+          socket.broadcast.to(roomID).emit('closeRoom', (username))
         });
       } else {
         //Ne marche pas...trouver la solution
