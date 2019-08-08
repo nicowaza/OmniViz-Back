@@ -43,7 +43,15 @@ const io = connectIO(server)
 
 //logger
 app.use(morgan('combined'));
+const csp = require('express-csp-header');
 
+// Content Security Policy (CSP)
+app.use(csp({
+    policies: {
+        'default-src': [csp.NONE],
+        'img-src': [csp.SELF],
+    }
+}));
 //CROSS ORIGINS
 app.use(cors({
   origin:'http://localhost:8080',
