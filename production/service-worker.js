@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/precache-manifest.f168dd5492e537165fb264c7d5dbd9be.js"
+  "/precache-manifest.e5b00b075b4d88ea6a7094686f0554c4.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "omniviz-front"});
