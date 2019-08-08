@@ -336,7 +336,7 @@ __webpack_require__(/*! ./helpers/passport */ "./src/helpers/passport.js").defau
 
 const app = express(); //static files
 
-app.use(express.static('production')); // Handle production
+app.use(express.static('public')); // Handle production
 
 if (false) {}
 
