@@ -1,6 +1,6 @@
 const express = require ('express');
 const cors = require('cors');
-const csp = require('csp');
+const csp = require('express-csp-header');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
@@ -44,7 +44,7 @@ const io = connectIO(server)
 
 //logger
 app.use(morgan('combined'));
-const csp = require('express-csp-header');
+
 
 // Content Security Policy (CSP)
 app.use(csp({
