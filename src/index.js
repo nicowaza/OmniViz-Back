@@ -6,27 +6,25 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
-// import { verifiedAuth } from './helpers/verifyAuth';
 const verifiedAuth = require('./helpers/verifyAuth');
-const connectIO = require('./sockets/sockets.js')
+const connectIO = require('./sockets/sockets.js');
 // import connection from './helpers/db.connexion';
 //authentication packages
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const passport = require('passport');
-// const passportSocketIo = require("passport.socketio");
-
 require('./helpers/passport').default(passport);
 
+// index.js se trouve dans src au lieu de root car c'est le point d'entrée de backpack
 
 const app = express();
 
-// static files
+// static folder in development
 app.use(express.static('public'));
 
 // Handle production
 if (process.env.NODE_ENV === 'production') {
-  // Static folder
+  // Static folder in prod
   console.log('process.env', process.env.NODE_ENV)
   app.use(express.static('production'));
 
@@ -40,11 +38,8 @@ const server = app.listen(port, () => console.log(`server is running on port ${p
 
 const io = connectIO(server)
 
-
-
 //logger
 app.use(morgan('combined'));
-
 
 // Content Security Policy (CSP)
 app.use(csp({
@@ -53,6 +48,7 @@ app.use(csp({
         'img-src': [csp.SELF],
     }
 }));
+
 //CROSS ORIGINS
 app.use(cors({
   origin:'http://localhost:8080',
