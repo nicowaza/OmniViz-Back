@@ -35,7 +35,7 @@
   },
   "scripts": {
     "dev": "backpack",
-    "start": "NODE_ENV=production backpack"
+    "start": "NODE_ENV=production node index.js"
   },
   "repository": {
     "type": "git",
