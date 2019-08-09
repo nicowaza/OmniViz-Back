@@ -10,7 +10,6 @@ const bcrypt = require('bcrypt');
 const verifiedAuth = require('./helpers/verifyAuth');
 const connectIO = require('./sockets/sockets.js')
 // import connection from './helpers/db.connexion';
-console.log(process.env.NODE_ENV)
 //authentication packages
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
