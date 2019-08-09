@@ -308,6 +308,8 @@ const express = __webpack_require__(/*! express */ "express");
 
 const cors = __webpack_require__(/*! cors */ "cors");
 
+const csp = __webpack_require__(/*! express-csp-header */ "express-csp-header");
+
 const morgan = __webpack_require__(/*! morgan */ "morgan");
 
 const bodyParser = __webpack_require__(/*! body-parser */ "body-parser");
@@ -337,14 +339,26 @@ __webpack_require__(/*! ./helpers/passport */ "./src/helpers/passport.js").defau
 const app = express(); //static files
 
 app.use(express.static('public')); // Handle production
-
-if (false) {}
+// if (process.env.NODE_ENV === 'production') {
+//   // Static folder
+//   console.log('process.env', process.env.NODE_ENV)
+//   app.use(express.static('production'));
+//   // Handle SPA
+//   app.get(/.*/, (req, res) => res.sendFile('production/index.html'));
+// }
 
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
 const io = connectIO(server); //logger
 
-app.use(morgan('combined')); //CROSS ORIGINS
+app.use(morgan('combined')); // Content Security Policy (CSP)
+
+app.use(csp({
+  policies: {
+    'default-src': [csp.NONE],
+    'img-src': [csp.SELF]
+  }
+})); //CROSS ORIGINS
 
 app.use(cors({
   origin: 'http://localhost:8080',
@@ -922,6 +936,17 @@ module.exports = require("cors");
 /***/ (function(module, exports) {
 
 module.exports = require("express");
+
+/***/ }),
+
+/***/ "express-csp-header":
+/*!*************************************!*\
+  !*** external "express-csp-header" ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("express-csp-header");
 
 /***/ }),
 
