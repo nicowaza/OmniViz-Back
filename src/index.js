@@ -31,8 +31,9 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static('/production'));
 
   // Handle SPA
-  app.get(/.*/, (req, res) => res.sendFile('/home/tech/workspace/cproh/OmniViz-Back/production/index.html'));
+  app.get(/.*/, (req, res) => res.sendFile(__dirname, '.../app/production/index.html'));
 }
+
 
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
