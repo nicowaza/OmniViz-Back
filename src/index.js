@@ -23,12 +23,12 @@ require('./helpers/passport').default(passport);
 const app = express();
 
 //static files
-app.use(express.static('public'));
+app.use(express.static('production'));
 
 // Handle production
 if (process.env.NODE_ENV === 'production') {
   // Static folder
-  console.log(process.env.NODE_ENV)
+  console.log('process.env', process.env.NODE_ENV)
   app.use(express.static('production'));
 
   // Handle SPA
