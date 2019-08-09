@@ -31,7 +31,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static('/production'));
 
   // Handle SPA
-  app.get(/.*/, (req, res) => res.sendFile('/production/index.html', { root: '/app' }));
+  app.get(/.*/, (req, res) => res.sendFile('/production/index.html'));
 }
 
 const port = process.env.PORT || 5000;
@@ -45,13 +45,13 @@ const io = connectIO(server)
 app.use(morgan('combined'));
 
 
-// // Content Security Policy (CSP)
-// app.use(csp({
-//     policies: {
-//         'default-src': [csp.NONE],
-//         'img-src': [csp.SELF],
-//     }
-// }));
+// Content Security Policy (CSP)
+app.use(csp({
+    policies: {
+        'default-src': [csp.NONE],
+        'img-src': [csp.SELF],
+    }
+}));
 //CROSS ORIGINS
 app.use(cors({
   origin:'http://localhost:8080',
