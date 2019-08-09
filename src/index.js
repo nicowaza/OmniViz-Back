@@ -28,10 +28,10 @@ app.use(express.static('public'));
 if (process.env.NODE_ENV === 'production') {
   // Static folder
   console.log('process.env', process.env.NODE_ENV)
-  app.use(express.static('production'));
+  app.use(express.static(__dirname, '../production'));
 
   // Handle SPA
-  app.get(/.*/, (req, res) => res.sendFile(__dirname, '...production/index.html'));
+  app.get(/.*/, (req, res) => res.sendFile(__dirname, '../production/index.html'));
 }
 
 const port = process.env.PORT || 5000;
