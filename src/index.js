@@ -23,7 +23,7 @@ require('./helpers/passport').default(passport);
 const app = express();
 
 //static files
-app.use(express.static('production'));
+app.use(express.static('public'));
 
 // Handle production
 // if (process.env.NODE_ENV === 'production') {
