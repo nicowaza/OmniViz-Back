@@ -28,7 +28,7 @@ app.use(express.static('public'));
 if (process.env.NODE_ENV === 'production') {
   // Static folder
   console.log('process.env', process.env.NODE_ENV)
-  app.use(express.static('/production'));
+  app.use(express.static('production'));
 
   // Handle SPA
   app.get(/.*/, (req, res) => res.sendFile('/production/index.html', { root : '/app' }));
