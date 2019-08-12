@@ -10,19 +10,20 @@ export default function(app, passport, io) {
 
   //cours classés par ordre id (ordre de création)
   roomRouter.get('/', (req, res) => {
-    res.status(200).send({status: true, message: 'hello'})
+    console.log('turlututu')
     // console.log(req.isAuthenticated())
-    // connection.query('SELECT * FROM rooms ', (err, results, fields) => {
-    //   if (err) {
-    //     console.log(err);
-    //     res.send({
-    //       err
-    //     })
-    //   } else {
-    //     console.log(results)
-    //     res.status(200).send({status: true, results: results});
-    //   }
-    // });;
+    connection.query('SELECT * FROM rooms ', (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.send({
+          err
+        })
+      } else {
+        console.log('hello')
+        console.log(results)
+        res.status(200).send({status: true, results: results});
+      }
+    });;
   });
 
   // liste des cours auquels à participé le user
