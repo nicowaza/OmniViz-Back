@@ -101,7 +101,7 @@ app.use(passport.session());
 const userRouter = require('./routes/users').default(io, passport, app);
 const roomRouter = require('./routes/rooms').default(io, passport, app);
 app.use('/users', userRouter);
-app.use('/rooms', roomRouter)
+app.use('/test', roomRouter)
 
 
 app.get('/', verifiedAuth, (req, res, next) => {
