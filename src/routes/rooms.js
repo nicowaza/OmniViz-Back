@@ -9,8 +9,7 @@ const roomRouter = express.Router();
 export default function(app, passport, io) {
 
   //cours classés par ordre id (ordre de création)
-  roomRouter.get('/classes', (req, res) => {
-    console.log('turlututu')
+  roomRouter.get('/', verifiedAuth, (req, res) => {
     // console.log(req.isAuthenticated())
     connection.query('SELECT * FROM rooms ', (err, results, fields) => {
       if (err) {
@@ -19,7 +18,6 @@ export default function(app, passport, io) {
           err
         })
       } else {
-        console.log('hello')
         console.log(results)
         res.status(200).send({status: true, results: results});
       }
