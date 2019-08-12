@@ -8,6 +8,8 @@ const expressValidator = require('express-validator');
 const bcrypt = require('bcrypt');
 const verifiedAuth = require('./helpers/verifyAuth');
 const connectIO = require('./sockets/sockets.js');
+// import connection from './helpers/db.connexion';
+//authentication packages
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const passport = require('passport');
@@ -16,6 +18,20 @@ require('./helpers/passport').default(passport);
 // index.js se trouve dans src au lieu de root car c'est le point d'entrée de backpack
 
 const app = express();
+
+// static folder in development
+app.use(express.static('public'));
+
+// Handle production
+if (process.env.NODE_ENV === 'production') {
+  // Static folder in prod
+  console.log('process.env', process.env.NODE_ENV)
+  app.use(express.static('production'));
+
+  // Handle SPA
+  app.get(('/'), (req, res) => res.sendFile('/production/index.html', { root : '/app' }));
+}
+
 
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
@@ -87,18 +103,6 @@ const roomRouter = require('./routes/rooms').default(io, passport, app);
 app.use('/users', userRouter);
 app.use('/rooms', roomRouter)
 
-// static folder in development
-app.use(express.static('public'));
-
-// Handle production
-if (process.env.NODE_ENV === 'production') {
-  // Static folder in prod
-  console.log('process.env', process.env.NODE_ENV)
-  app.use(express.static('production'));
-
-  // Handle SPA
-  app.get(('/'), (req, res) => res.sendFile('/production/index.html', { root : '/app' }));
-}
 
 app.get('/', verifiedAuth, (req, res, next) => {
   const user = req.user[0];
