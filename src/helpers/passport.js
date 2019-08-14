@@ -118,9 +118,9 @@ export default function(passport) {
         const id = user.userID
         console.log('deserialize usr id: ', id)
         connection.query("SELECT * FROM users WHERE userID = ? ",[id], function(err, user){
+            connection.end();
             done(null, user);
             // console.log('user : ', user)
-            connection.end();
         });
     });
 };
