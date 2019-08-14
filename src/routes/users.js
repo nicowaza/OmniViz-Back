@@ -73,7 +73,6 @@ export default function(app, passport, io) {
             });
           }else{
             console.log(results);
-            connection.end();
             res.send({
               status:200,
               "success":"new user registered sucessfully",
@@ -81,6 +80,7 @@ export default function(app, passport, io) {
             });
           };
         });
+        connection.end();
       });
     };
   });
@@ -96,11 +96,11 @@ export default function(app, passport, io) {
             console.log(err)
           }
           console.log('authentifié', req.isAuthenticated())
-          connection.end();
           res.send({user: user, isAuthenticated: req.isAuthenticated(), message: message.message})
         })
       }
     })(req,res,next);
+    connection.end();
   });
 
   userRouter.get('/logout', (req, res) => {

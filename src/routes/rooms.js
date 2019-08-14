@@ -19,10 +19,10 @@ export default function(app, passport, io) {
         })
       } else {
         console.log(results)
-        connection.end();
         res.status(200).send({status: true, results: results});
       }
-    });;
+    });
+    connection.end();
   });
 
   // liste des cours auquels à participé le user
@@ -42,10 +42,11 @@ export default function(app, passport, io) {
         })
       } else {
         console.log(results)
-        connection.end();
+
         res.status(200).send({status: true, results: results});
       }
     });
+    connection.end();
   });
 
   // cours classés par heure de début de classe
@@ -58,10 +59,10 @@ export default function(app, passport, io) {
         })
       } else {
         console.log(results)
-        connection.end();
         res.status(200).send({status: true, results: results});
       }
-    });;
+    });
+    connection.end();
   });
 
   // cours du jour
@@ -81,10 +82,10 @@ export default function(app, passport, io) {
         })
       } else {
         console.log(results)
-        connection.end();
         res.status(200).send({status: true, results: results});
       }
-    });;
+    });
+    connection.end();
   });
 
   // cours séléctionné par ID
@@ -109,15 +110,15 @@ export default function(app, passport, io) {
       }else{
         console.log(results[0]);
         console.log(results[1]);
-        connection.end();
         res.send({
           status:200,
           content1: results[0],
           content2: results[1],
         });
       };
-    })
-  })
+    });
+    connection.end();
+  });
 
   roomRouter.post('/', verifiedAuth, (req, res) => {
 
@@ -157,6 +158,7 @@ export default function(app, passport, io) {
             };
           });
         }
+        connection.end();
     });
   return roomRouter;
 }
