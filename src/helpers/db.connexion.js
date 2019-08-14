@@ -28,27 +28,6 @@ function handleDisconnect() {
        throw err;                                 // server variable configures this)
     }
   })
-};
-
-connection.connect(function(err) {
-  if (err) {
-    console.log('error when connecting to db:', err);
-    setTimeout(handleDisconnect, 2000);
-  } else console.log("DB Connected!");
-
-  // création de la dB
-  // connection.query("CREATE DATABASE IF NOT EXISTS OmnivizTest CHARACTER SET 'utf8'", function (err, result) {
-  //   if (err) throw err;
-  //   console.log("database created");
-  // });
-  connection.on('error', function(err) {
-    console.log('db error', err);
-    if(err.code === 'PROTOCOL_CONNECTION_LOST') { // Connection to the MySQL server is usually
-      handleDisconnect();                         // lost due to either server restart, or a
-    } else {                                      // connnection idle timeout (the wait_timeout
-       throw err;                                 // server variable configures this)
-    }
-  })
 
   connection.query("CREATE TABLE IF NOT EXISTS heroku_7d8051b18f89a33.users (userID INT NOT NULL UNIQUE AUTO_INCREMENT, username VARCHAR(50) NOT NULL UNIQUE, email VARCHAR(250) NOT NULL UNIQUE, createdat TIMESTAMP, firstname VARCHAR(255), lastname VARCHAR(255), avatar VARCHAR(500), university VARCHAR(255), password VARCHAR(255) NOT NULL, role VARCHAR(30))", function(err, result) {
     if (err) throw err;
@@ -70,7 +49,21 @@ connection.connect(function(err) {
     if (err) throw err;
     console.log("Table Participants created")
   });
-});
+};
+
+handleDisconnect()
+
+// connection.connect(function(err) {
+//   if (err) {
+//     console.log('error when connecting to db:', err);
+//     setTimeout(handleDisconnect, 2000);
+//   } else console.log("DB Connected!");
+
+  // création de la dB
+  // connection.query("CREATE DATABASE IF NOT EXISTS OmnivizTest CHARACTER SET 'utf8'", function (err, result) {
+  //   if (err) throw err;
+  //   console.log("database created");
+  // });
 
 
 module.exports = connection
