@@ -102,7 +102,6 @@ export default function(passport) {
                         });
                     };
                 });
-                connection.end();
             }
         )
     )
