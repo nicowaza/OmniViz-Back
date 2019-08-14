@@ -121,6 +121,5 @@ export default function(passport) {
             done(null, user);
             // console.log('user : ', user)
         });
-        connection.end();
     });
 };
