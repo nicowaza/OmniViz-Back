@@ -100,7 +100,6 @@ export default function(app, passport, io) {
         })
       }
     })(req,res,next);
-    connection.end();
   });
 
   userRouter.get('/logout', (req, res) => {
