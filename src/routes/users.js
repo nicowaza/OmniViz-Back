@@ -73,12 +73,12 @@ export default function(app, passport, io) {
             });
           }else{
             console.log(results);
-            connection.end();
             res.send({
               status:200,
               "success":"new user registered sucessfully",
               content: results
             });
+            connection.end();
           };
         });
       });

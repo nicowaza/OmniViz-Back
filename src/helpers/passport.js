@@ -85,7 +85,6 @@ export default function(passport) {
                             const user = results[0]
                             console.log('user :', user)
                             // res.send({status: 200, user: user})
-                            connection.end();
                             return done(null, user, { message : 'user identified'});
                         } else {
                                 console.log('wrong password')
@@ -121,6 +120,7 @@ export default function(passport) {
         connection.query("SELECT * FROM users WHERE userID = ? ",[id], function(err, user){
             done(null, user);
             // console.log('user : ', user)
+            connection.end();
         });
     });
 };

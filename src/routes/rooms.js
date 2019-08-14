@@ -19,9 +19,9 @@ export default function(app, passport, io) {
         })
       } else {
         console.log(results)
-        connection.end();
         res.status(200).send({status: true, results: results});
       }
+      connection.end();
     });;
   });
 
@@ -42,9 +42,9 @@ export default function(app, passport, io) {
         })
       } else {
         console.log(results)
-        connection.end();
         res.status(200).send({status: true, results: results});
       }
+      connection.end();
     });
   });
 
@@ -58,9 +58,9 @@ export default function(app, passport, io) {
         })
       } else {
         console.log(results)
-        connection.end();
         res.status(200).send({status: true, results: results});
       }
+      connection.end();
     });;
   });
 
@@ -81,9 +81,9 @@ export default function(app, passport, io) {
         })
       } else {
         console.log(results)
-        connection.end();
         res.status(200).send({status: true, results: results});
       }
+      connection.end();
     });;
   });
 
@@ -109,12 +109,12 @@ export default function(app, passport, io) {
       }else{
         console.log(results[0]);
         console.log(results[1]);
-        connection.end();
         res.send({
           status:200,
           content1: results[0],
           content2: results[1],
         });
+        connection.end();
       };
     })
   })
@@ -148,12 +148,12 @@ export default function(app, passport, io) {
               });
             } else{
               console.log(results);
-              connection.end();
               res.send({
                 status:200,
                 "success":"new class created",
                 content: results
               });
+              connection.end();
             };
           });
         }
