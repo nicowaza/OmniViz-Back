@@ -41,7 +41,6 @@ connection.connect(function(err) {
     if (err) throw err;
     console.log("Table Participants created")
   });
-  connection.end();
 });
 
 
