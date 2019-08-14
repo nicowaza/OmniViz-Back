@@ -41,8 +41,8 @@ export default function(app, passport, io) {
           err
         })
       } else {
-        connection.end();
         console.log(results)
+        connection.end();
         res.status(200).send({status: true, results: results});
       }
     });
@@ -57,8 +57,8 @@ export default function(app, passport, io) {
           err
         })
       } else {
-        connection.end();
         console.log(results)
+        connection.end();
         res.status(200).send({status: true, results: results});
       }
     });;
@@ -80,8 +80,8 @@ export default function(app, passport, io) {
           err
         })
       } else {
-        connection.end();
         console.log(results)
+        connection.end();
         res.status(200).send({status: true, results: results});
       }
     });;
@@ -147,8 +147,8 @@ export default function(app, passport, io) {
                 errors:errors
               });
             } else{
-              connection.end();
               console.log(results);
+              connection.end();
               res.send({
                 status:200,
                 "success":"new class created",
