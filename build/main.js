@@ -514,13 +514,14 @@ const roomRouter = express.Router();
       }
     });
     ;
-  }); // cours séléctionné par ID
+  }); // timeline séléctionnée par ID
 
-  roomRouter.get('/:id', verifiedAuth, (req, res) => {
+  roomRouter.get('/timeline/:id', verifiedAuth, (req, res) => {
     const id = req.params.id;
     let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass
     FROM rooms
-    WHERE rooms.roomID = ${id}; SELECT tags.tagID, tags.userID, tags.time, tags.color
+    WHERE rooms.roomID = ${id};
+    SELECT tags.tagID, tags.userID, tags.time, tags.color
     FROM tags
     WHERE tags.roomID = ${id}`; // let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass, tags.tagID, tags.userID, tags.time, tags.color
     // FROM rooms
@@ -541,6 +542,30 @@ const roomRouter = express.Router();
           status: 200,
           content1: results[0],
           content2: results[1]
+        });
+      }
+
+      ;
+    });
+  }); // single cours (par id)
+
+  roomRouter.get('/:id', verifiedAuth, (req, res) => {
+    const id = req.params.id;
+    let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass
+    FROM rooms
+    WHERE rooms.roomID = ${id}`;
+    connection.query(query, (err, results, fields) => {
+      if (err) {
+        console.log(err);
+        res.send({
+          status: 400,
+          errors: err
+        });
+      } else {
+        console.log(results);
+        res.send({
+          status: 200,
+          results
         });
       }
 
@@ -763,7 +788,8 @@ function connectIO(server) {
       });
     });
     socket.on('join', data => {
-      // console.log('room data :', data)
+      console.log('room data :', data);
+
       if (socket.request.session.passport.user) {
         const socketUser = socket.request.session.passport.user;
         console.log('scoket user', socketUser);
@@ -802,6 +828,7 @@ function connectIO(server) {
           console.log('tag datas', data);
           const color = data.tag;
           const time = data.timestamp;
+          console.log('time', time);
           console.log(username);
           socket.broadcast.to(roomID).emit('event', {
             color,

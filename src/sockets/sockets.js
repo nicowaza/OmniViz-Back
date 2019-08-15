@@ -26,7 +26,7 @@ function connectIO(server) {
     })
 
     socket.on('join', (data) => {
-      // console.log('room data :', data)
+      console.log('room data :', data)
       if ( socket.request.session.passport.user) {
 
         const socketUser =  socket.request.session.passport.user
@@ -73,6 +73,7 @@ function connectIO(server) {
           console.log('tag datas', data)
           const color = data.tag;
           const  time = data.timestamp;
+          console.log('time', time)
           console.log(username)
 
           socket.broadcast.to(roomID).emit('event', {
