@@ -521,9 +521,20 @@ const roomRouter = express.Router();
     let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass
     FROM rooms
     WHERE rooms.roomID = ${id};
-    SELECT tags.tagID, tags.userID, tags.time, tags.color
+
+    SELECT tags.tagID, tags.userID, tags.time, tags.color, users.userID, users.username, users.firstname, users.lastname, users.email, users.avatar
     FROM tags
-    WHERE tags.roomID = ${id}`; // let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass, tags.tagID, tags.userID, tags.time, tags.color
+    INNER JOIN users
+    ON tags.userID = users.userID
+    WHERE tags.roomID = ${id}
+    `; // SELECT tags.tagID, tags.userID, tags.time, tags.color
+    // FROM tags
+    // WHERE tags.roomID = ${id};
+    // SELECT *
+    // FROM users
+    // WHERE userID
+    // IN (SELECT userID FROM Participants WHERE roomID = ${id})
+    // let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass, tags.tagID, tags.userID, tags.time, tags.color
     // FROM rooms
     // INNER JOIN tags ON rooms.roomID = tags.roomID
     // WHERE rooms.roomID = ${id}`
@@ -538,10 +549,12 @@ const roomRouter = express.Router();
       } else {
         console.log(results[0]);
         console.log(results[1]);
+        console.log(results[2]);
         res.send({
           status: 200,
           content1: results[0],
-          content2: results[1]
+          content2: results[1],
+          content3: results[2]
         });
       }
 
