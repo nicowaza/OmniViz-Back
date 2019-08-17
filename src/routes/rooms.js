@@ -11,6 +11,11 @@ export default function(app, passport, io) {
   //cours classés par ordre id (ordre de création)
   roomRouter.get('/', verifiedAuth, (req, res) => {
     // console.log(req.isAuthenticated())
+    // const query =`
+    // SELECT *, Participants.userID
+    // FROM rooms
+    // INNER JOIN Participants
+    // ON rooms.roomID = Participants.roomID`;
     connection.query('SELECT * FROM rooms ', (err, results, fields) => {
       if (err) {
         console.log(err);
@@ -149,7 +154,33 @@ export default function(app, passport, io) {
         });
       };
     })
-  })
+  });
+
+  // séléctionne tous les participants à un cours et récupère leur datas utilisateur
+  roomRouter.get('/participants/:id', verifiedAuth, (req, res) => {
+    const id = req.params.id
+    const query =
+      `SELECT Participants.userID, users.username, users.firstname, users.lastname
+      FROM Participants
+      INNER JOIN users
+      ON Participants.userID = users.userID
+      WHERE roomID = ${id}`;
+      connection.query(query, (err, results, fields) => {
+        if (err) {
+          console.log(err);
+          res.send({
+            status:400,
+            errors:err
+          });
+        }else{
+          console.log(results);
+          res.send({
+            status:200,
+            results,
+          });
+        }
+      });
+  });
 
   roomRouter.post('/', verifiedAuth, (req, res) => {
 
