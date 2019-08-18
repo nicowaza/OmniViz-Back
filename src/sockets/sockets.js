@@ -42,8 +42,8 @@ function connectIO(server) {
 
         // console.log('room data', roomData)
 
-        console.log('socket:', socketUser)
-
+        console.log('socket user id:', user_id)
+        console.log('socket username: ', username)
         socket.join(roomID, function() {
           console.log('room data', roomData)
           console.log(`${username} has joined ${roomName}`);
