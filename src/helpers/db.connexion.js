@@ -57,7 +57,7 @@ function handleDisconnect() {
   });
 
 
-  connection.on('error', function(err) {
+  pool.on('error', function(err) {
       console.log('3. db error', err);
       if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.fatal) {
         console.log(err.fatal);	// Connection to the MySQL server is usually
