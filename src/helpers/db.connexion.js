@@ -58,7 +58,6 @@ function handleDisconnect() {
       console.log('3. db error', err);
       if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.fatal) {
         console.log(err.fatal);	// Connection to the MySQL server is usually
-        connection.destroy()
         handleDisconnect();                      	// lost due to either server restart, or a
       } else {                                      	// connnection idle timeout (the wait_timeout
           throw err;                                  // server variable configures this)
