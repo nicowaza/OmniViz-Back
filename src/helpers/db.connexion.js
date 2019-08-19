@@ -43,6 +43,7 @@ connection.connect(function(err) {
   });
 });
 
+connection.end();
 
 // var db_config = {
 //   host: 'localhost',
