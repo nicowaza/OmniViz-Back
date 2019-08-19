@@ -60,7 +60,7 @@ function connectIO(server) {
           // insert les participants au cours dans la table participants que si ils ne sont pas déjà enregistré pour ce cours
           let query = `INSERT IGNORE INTO Participants (userID, roomID) VALUES ('${user_id}', '${roomID}')`;
 
-          connection.query(query, (err, results, fields) => {
+          pool.query(query, (err, results, fields) => {
             if (err) {
               console.log(err);
             } else {
