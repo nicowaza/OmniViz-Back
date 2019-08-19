@@ -1,6 +1,6 @@
 const LocalStrategy   = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
-const connection = require('./db.connexion');
+const pool = require('./db.connexion');
 
 // expose this function to our app using module.exports
 export default function(passport) {
@@ -32,7 +32,7 @@ export default function(passport) {
     //     function(req, email, password, done) {
     //         // find a user whose email is the same as the forms email
     //         // we are checking to see if the user trying to register already exists
-    //         connection.query("SELECT * FROM users WHERE email = ?",[email], function(err, result, fields) {
+    //         pool.query("SELECT * FROM users WHERE email = ?",[email], function(err, result, fields) {
     //             if (err)
     //                 return done(err);
     //             if (result.length > 0) {
@@ -48,7 +48,7 @@ export default function(passport) {
 
     //                 var insertQuery = "INSERT INTO users ( email, password ) values (?,?)";
 
-    //                 connection.query(insertQuery,[newUserMysql.email, newUserMysql.password],function(err, rows) {
+    //                 pool.query(insertQuery,[newUserMysql.email, newUserMysql.password],function(err, rows) {
     //                     newUserMysql.id = rows.insertId;
 
     //                     return done(null, newUserMysql);
@@ -69,7 +69,7 @@ export default function(passport) {
             passReqToCallback : true // allows us to pass back the entire request to the callback
         },
         function(req, email, password, done) { // callback with email and password from our form
-            connection.query("SELECT * FROM users WHERE email = ?",[email], function(err, results, fields, user){
+            pool.query("SELECT * FROM users WHERE email = ?",[email], function(err, results, fields, user){
                 if (err)
                     return done(err);
                 if (results.length === 0) {
@@ -117,7 +117,7 @@ export default function(passport) {
 
         const id = user.userID
         console.log('deserialize usr id: ', id)
-        connection.query("SELECT * FROM users WHERE userID = ? ",[id], function(err, results){
+        pool.query("SELECT * FROM users WHERE userID = ? ",[id], function(err, results){
             done(null, results[0]);
             // console.log('user : ', user)
         });

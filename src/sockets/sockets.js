@@ -1,4 +1,4 @@
-const connection = require('../helpers/db.connexion');
+const pool = require('../helpers/db.connexion');
 
 const socket = require ('socket.io');
 
@@ -85,7 +85,7 @@ function connectIO(server) {
 
           let query = `INSERT INTO tags (userID, roomID, time, color) VALUES ('${user_id}', '${roomID}', '${time}', '${color}')`;
 
-          connection.query(query, (err, results, fields) => {
+          pool.query(query, (err, results, fields) => {
             if (err) {
               console.log(err);
             } else {

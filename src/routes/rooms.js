@@ -1,5 +1,5 @@
 const express = require('express');
-const connection = require('../helpers/db.connexion');
+const pool = require('../helpers/db.connexion');
 const verifiedAuth = require('../helpers/verifyAuth');
 const mysql = require('mysql');
 const moment = require('moment');
@@ -11,7 +11,7 @@ export default function(app, passport, io) {
   //cours classés par ordre id (ordre de création)
   roomRouter.get('/', verifiedAuth, (req, res) => {
     // console.log(req.isAuthenticated())
-    connection.query('SELECT * FROM rooms ', (err, results, fields) => {
+    pool.query('SELECT * FROM rooms ', (err, results, fields) => {
       if (err) {
         console.log(err);
         res.send({
@@ -21,6 +21,7 @@ export default function(app, passport, io) {
         console.log(results)
         res.status(200).send({status: true, results: results});
       }
+
     });
   });
 
@@ -33,7 +34,7 @@ export default function(app, passport, io) {
     // utilisation d'une subquery pour d'abord récupérer l'id des cours auquel le user à participé (table participants). On passe ensuite ces id à la query qui liste les cours
     const query = `SELECT * FROM rooms WHERE roomID IN (SELECT roomID FROM Participants WHERE userID = ${id})`
 
-    connection.query(query, (err, results, fields) => {
+    pool.query(query, (err, results, fields) => {
       if (err) {
         console.log(err);
         res.send({
@@ -43,12 +44,13 @@ export default function(app, passport, io) {
         console.log(results)
         res.status(200).send({status: true, results: results});
       }
+
     });
   });
 
   // cours classés par heure de début de classe
   roomRouter.get('/startDate', verifiedAuth, (req, res) => {
-    connection.query('SELECT * FROM rooms ORDER BY `startClass` DESC', (err, results, fields) => {
+    pool.query('SELECT * FROM rooms ORDER BY `startClass` DESC', (err, results, fields) => {
       if (err) {
         console.log(err);
         res.send({
@@ -58,6 +60,7 @@ export default function(app, passport, io) {
         console.log(results)
         res.status(200).send({status: true, results: results});
       }
+
     });
   });
 
@@ -70,7 +73,7 @@ export default function(app, passport, io) {
     const endOfDay = now.endOf('day').format('X');
     // renvoie uniquement les cours de la journée (dont la date de début est compris entre le début de la fin du jour 0h 00m 00sec et 23h 59m 59sec)
     const query = `SELECT * FROM rooms WHERE startClass >= ${startOfDay} AND startClass <= ${endOfDay}`
-    connection.query(query , (err, results, fields) => {
+    pool.query(query , (err, results, fields) => {
       if (err) {
         console.log(err);
         res.send({
@@ -80,6 +83,7 @@ export default function(app, passport, io) {
         console.log(results)
         res.status(200).send({status: true, results: results});
       }
+
     });
   });
 
@@ -99,7 +103,7 @@ export default function(app, passport, io) {
     // FROM rooms
     // INNER JOIN tags ON rooms.roomID = tags.roomID
     // WHERE rooms.roomID = ${id}`
-    connection.query(query, (err, results, fields) => {
+    pool.query(query, (err, results, fields) => {
       if (err) {
         console.log(err);
         res.send({
@@ -115,6 +119,7 @@ export default function(app, passport, io) {
           content2: results[1],
         });
       };
+
     })
   });
 
@@ -124,7 +129,7 @@ export default function(app, passport, io) {
     let query = `SELECT rooms.roomID, rooms.authorID, rooms.authorUsername, rooms.authorFirstname, rooms.authorLastname, rooms.title, rooms.startClass, rooms.endClass
     FROM rooms
     WHERE rooms.roomID = ${id}`;
-    connection.query(query, (err, results, fields) => {
+    pool.query(query, (err, results, fields) => {
       if (err) {
         console.log(err);
         res.send({
@@ -138,6 +143,7 @@ export default function(app, passport, io) {
           results,
         });
       };
+
     })
   });
 
@@ -150,7 +156,7 @@ export default function(app, passport, io) {
       INNER JOIN users
       ON Participants.userID = users.userID
       WHERE roomID = ${id}`;
-      connection.query(query, (err, results, fields) => {
+      pool.query(query, (err, results, fields) => {
         if (err) {
           console.log(err);
           res.send({
@@ -163,7 +169,8 @@ export default function(app, passport, io) {
             status:200,
             results,
           });
-        }
+        };
+
       });
   });
 
@@ -187,7 +194,7 @@ export default function(app, passport, io) {
 
         console.log(query)
         // const [errors, results] = createRoom(body)
-          connection.query(query, (errors, results, fields) => {
+          pool.query(query, (errors, results, fields) => {
             if (errors) {
               console.log(errors);
               res.send({
@@ -202,6 +209,7 @@ export default function(app, passport, io) {
                 content: results
               });
             };
+
           });
         }
     });

@@ -1,5 +1,5 @@
 const express = require('express')
-const connection = require ('../helpers/db.connexion');
+const pool = require ('../helpers/db.connexion');
 // import { verifiedAuth } from '../helpers/verifyAuth';
 const verifiedAuth = require('../helpers/verifyAuth');
 const mysql = require('mysql');
@@ -64,7 +64,7 @@ export default function(app, passport, io) {
       bcrypt.hash(password, saltRounds, function(err, hash) {
         let query = `INSERT INTO users (email, username, password, firstname, lastname, avatar, university, role) VALUES ('${email}', '${username}', '${hash}', '${firstname}', '${lastname}', '${avatar}', '${university}', '${role}')`;
 
-        connection.query(query, (err, results, fields) => {
+        pool.query(query, (err, results, fields) => {
           if (errors) {
             console.log(errors);
             res.send({
