@@ -219,7 +219,7 @@ export default function(app, passport, io) {
       const id = req.params.id;
       const endClass = req.body.endClass
       const query = `UPDATE rooms SET endClass = ${endClass} WHERE roomID = ${id}`
-      connection.query(query, (errors, results, fields) => {
+      pool.query(query, (errors, results, fields) => {
         if (errors) {
           console.log(errors);
           res.send({
