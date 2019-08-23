@@ -213,5 +213,27 @@ export default function(app, passport, io) {
           });
         }
     });
+
+    // update de l'heure de fin de cours
+    roomRouter.put('/:id', verifiedAuth, (req,res) => {
+      const id = req.params.id;
+      const endClass = req.body.endClass
+      const query = `UPDATE rooms SET endClass = ${endClass} WHERE roomID = ${id}`
+      connection.query(query, (errors, results, fields) => {
+        if (errors) {
+          console.log(errors);
+          res.send({
+            status:400,
+            errors:errors
+          });
+        } else{
+          console.log(results);
+          res.send({
+            status:200,
+            success:"endClass updated",
+          });
+        };
+      });
+    });
   return roomRouter;
 }
