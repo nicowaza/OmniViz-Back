@@ -93,6 +93,15 @@ const roomRouter = require('./routes/rooms').default(io, passport, app);
 app.use('/users', userRouter);
 app.use('/rooms', roomRouter)
 
+// Handle production
+if (process.env.NODE_ENV === 'production') {
+  // Static folder in prod
+  console.log('process.env', process.env.NODE_ENV)
+  app.use(express.static('production'));
+
+  // Handle SPA
+  app.get((/.*/), (req, res) => res.sendFile('../production/index.html', { root : '/app' }));
+}
 
 app.get('/', verifiedAuth, (req, res, next) => {
   const user = req.user[0];
@@ -107,12 +116,4 @@ app.get('/', verifiedAuth, (req, res, next) => {
   console.log('isAuthenticated :', req.isAuthenticated())
 })
 
-// Handle production
-if (process.env.NODE_ENV === 'production') {
-  // Static folder in prod
-  console.log('process.env', process.env.NODE_ENV)
-  app.use(express.static('production'));
 
-  // Handle SPA
-  app.get(('*'), (req, res) => res.sendFile('/production/index.html', { root : '/app' }));
-}
