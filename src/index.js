@@ -88,6 +88,7 @@ app.use(passport.session());
 
 
 //routes
+// attention à ce que l'url des routes ne matchent pas celles du front-end !!
 const userRouter = require('./routes/users').default(io, passport, app);
 const roomRouter = require('./routes/rooms').default(io, passport, app);
 app.use('/users', userRouter);
