@@ -99,7 +99,7 @@ if (process.env.NODE_ENV === 'production') {
   console.log('process.env', process.env.NODE_ENV)
   app.use(express.static('production'));
 
-  // Handle SPA
+  // Handle redirect SPA
   app.get((/.*/), (req, res) => res.sendFile('/production/index.html', { root : '/app' }));
 }
 
@@ -110,9 +110,7 @@ app.get('/', verifiedAuth, (req, res, next) => {
     email: user.email,
     role: user.role
   };
-  // res.send({userdata: userdata, isAuthenticated: req.isAuthenticated()})
-  // console.log('get req session user', req.session.passport)
-  // console.log('username', req.username)
+
   console.log('isAuthenticated :', req.isAuthenticated())
 })
 
