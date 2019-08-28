@@ -22,15 +22,6 @@ const app = express();
 // static folder in development
 app.use(express.static('public'));
 
-// Handle production
-if (process.env.NODE_ENV === 'production') {
-  // Static folder in prod
-  console.log('process.env', process.env.NODE_ENV)
-  app.use(express.static('production'));
-
-  // Handle redirect SPA
-  app.get(('*'), (req, res) => res.sendFile('/production/index.html', { root : '/app' }));
-}
 
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
@@ -101,6 +92,16 @@ const userRouter = require('./routes/users').default(io, passport, app);
 const roomRouter = require('./routes/rooms').default(io, passport, app);
 app.use('/users', userRouter);
 app.use('/rooms', roomRouter);
+
+// Handle production
+if (process.env.NODE_ENV === 'production') {
+  // Static folder in prod
+  console.log('process.env', process.env.NODE_ENV)
+  app.use(express.static('production'));
+
+  // Handle redirect SPA
+  app.get(('*'), (req, res) => res.sendFile('/production/index.html', { root : '/app' }));
+}
 
 app.get('/', verifiedAuth, (req, res, next) => {
   const user = req.user[0];
