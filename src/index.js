@@ -100,7 +100,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static('production'));
 
   // Handle SPA
-  app.get((/.*/), (req, res) => res.sendFile('../production/index.html', { root : '/app' }));
+  app.get((/.*/), (req, res) => res.sendFile('/production/index.html', { root : '/app' }));
 }
 
 app.get('/', verifiedAuth, (req, res, next) => {
