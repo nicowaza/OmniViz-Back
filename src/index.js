@@ -22,16 +22,6 @@ const app = express();
 // static folder in development
 app.use(express.static('public'));
 
-// Handle production
-if (process.env.NODE_ENV === 'production') {
-  // Static folder in prod
-  console.log('process.env', process.env.NODE_ENV)
-  app.use(express.static('production'));
-
-  // Handle SPA
-  app.get(('/'), (req, res) => res.sendFile('/production/index.html', { root : '/app' }));
-}
-
 
 const port = process.env.PORT || 5000;
 const server = app.listen(port, () => console.log(`server is running on port ${port}`));
@@ -51,7 +41,7 @@ app.use(csp({
 
 //CROSS ORIGINS
 app.use(cors({
-  origin:'http://localhost:8080',
+  origin:'https://omniviz.herokuapp.com',
   methods:['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -116,3 +106,13 @@ app.get('/', verifiedAuth, (req, res, next) => {
   // console.log('username', req.username)
   console.log('isAuthenticated :', req.isAuthenticated())
 })
+
+// Handle production
+if (process.env.NODE_ENV === 'production') {
+  // Static folder in prod
+  console.log('process.env', process.env.NODE_ENV)
+  app.use(express.static('production'));
+
+  // Handle SPA
+  app.get((/.*/), (req, res) => res.sendFile('../production/index.html', { root : '/app' }));
+}
