@@ -375,7 +375,8 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 5400000 // cookie: { secure: true }
+    maxAge: 21600000 // 6heures
+    // cookie: { secure: true }
 
   }
 });
@@ -400,7 +401,12 @@ app.get('/', verifiedAuth, (req, res, next) => {
     username: user.username,
     email: user.email,
     role: user.role
-  }; // res.send({userdata: userdata, isAuthenticated: req.isAuthenticated()})
+  };
+  res.send({
+    user: user,
+    isAuthenticated: req.isAuthenticated()
+  });
+  console.log('user', user); // res.send({userdata: userdata, isAuthenticated: req.isAuthenticated()})
   // console.log('get req session user', req.session.passport)
   // console.log('username', req.username)
 
@@ -729,15 +735,16 @@ const userRouter = express.Router();
   // });
   userRouter.post('/register', (req, res) => {
     req.checkBody('username', 'Username field cannot be empty.').notEmpty();
-    req.checkBody('username', 'Username must be between 4-15 characters long.').len(4, 15);
+    req.checkBody('username', 'Username must be between 5-20 characters long.').len(5, 20);
     req.checkBody('email', 'The email you entered is invalid, please try again.').isEmail();
     req.checkBody('email', 'Email address must be between 4-100 characters long, please try again.').len(4, 100);
     req.checkBody('email', 'Email field cannot be empty.').notEmpty();
     req.checkBody('password', 'Password field cannot be empty.').notEmpty();
-    req.checkBody('password', 'Password must be between 8-100 characters long.').len(8, 100);
-    req.checkBody("password", "Password must include one lowercase character, one uppercase character, a number, and a special character.").matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?!.* )(?=.*[^a-zA-Z0-9]).{8,}$/, "i");
-    req.checkBody('confirmedPassword', 'Password must be between 8-100 characters long.').len(8, 100);
+    req.checkBody('password', 'Password must be between 8-50 characters long.').len(8, 50);
+    req.checkBody("password", "Password must include one lowercase character, one uppercase character, a number, and a special character.").matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?!.* )(?=.*[^a-zA-Z0-9]).{8,}$/);
+    req.checkBody('confirmedPassword', 'Password must be between 8-50 characters long.').len(8, 50);
     req.checkBody('confirmedPassword', 'Passwords do not match, please try again.').equals(req.body.password);
+    req.checkBody('role', 'Please choose a role').notEmpty();
     const errors = req.validationErrors();
 
     if (errors) {

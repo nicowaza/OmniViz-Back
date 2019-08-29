@@ -64,7 +64,7 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 5400000
+    maxAge: 21600000 // 6heures
   }
   // cookie: { secure: true }
 });
@@ -94,6 +94,9 @@ app.get('/', verifiedAuth, (req, res, next) => {
     email: user.email,
     role: user.role
   };
+
+  res.send({user: user, isAuthenticated: req.isAuthenticated()});
+  console.log('user', user)
   // res.send({userdata: userdata, isAuthenticated: req.isAuthenticated()})
   // console.log('get req session user', req.session.passport)
   // console.log('username', req.username)
