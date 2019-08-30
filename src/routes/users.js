@@ -76,7 +76,7 @@ export default function(app, passport, io) {
             console.log(results);
             res.send({
               status:200,
-              "success":"new user registered sucessfully",
+              "success":"You've been registered sucessfully",
               content: results
             });
           };
