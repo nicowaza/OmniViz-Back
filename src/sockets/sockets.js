@@ -118,9 +118,9 @@ function connectIO(server) {
           });
         });
 
-        socket.on('closeRoom', function(data) {
-          console.log('classe fermée :', data)
-          socket.broadcast.to(roomID).emit('closeRoom')
+        socket.on('closeRoom', (data) => {
+          console.log('classe fermée :',data)
+          socket.broadcast.to(roomID).emit('closeRoom', (data))
         });
       } else {
         //Ne marche pas...trouver la solution
