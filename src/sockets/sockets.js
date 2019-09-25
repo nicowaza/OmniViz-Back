@@ -119,10 +119,10 @@ function connectIO(server) {
           });
         });
 
-        socket.on('closeRoom', () => {
+        socket.on('closeRoom', (data) => {
           // on devrait pouvoir récupérer le username envoyé depuis le front via closeRoom mais data ne marche pas...pkoi ?
-          console.log('classe fermée :', username)
-          socket.broadcast.to(roomID).emit('closeRoom', (username))
+          console.log('classe fermée :',data)
+          socket.broadcast.to(roomID).emit('closeRoom', (data))
         });
       } else {
         //Ne marche pas...trouver la solution
